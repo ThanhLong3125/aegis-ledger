@@ -1,0 +1,214 @@
+# 🗺️ AegisLedger - Lộ Trình & Thứ Tự Triển Khai Hệ Thống (Architecture Roadmap)
+
+> **Dự án:** AegisLedger - Autonomous Cryptographic Audit Trail & Tamper-Detection Engine  
+> **Kiến trúc:** Nx Monorepo, Event-Driven Architecture, Applied Cryptography & Database CDC  
+> **Tài liệu:** Kim chỉ nam quy định thứ tự ưu tiên triển khai từng thành phần (Phase-by-Phase Execution Plan).
+
+---
+
+## 🧭 1. Triết Lý Thiết Kế & Nguyên Tắc Xác Định Thứ Tự Ưu Tiên
+
+Trong kiến trúc **Nx Monorepo** và **Distributed Systems**, thứ tự xây dựng các thành phần **bắt buộc** phải tuân theo nguyên lý:
+> **"Bottom-Up & Dependency-Inversion" (Từ gốc rễ phụ thuộc thấp nhất đi lên)**
+
+1. **Hạ tầng trước (Docker / Storage / Message Broker):** Không thể viết và test code database/Kafka nếu container chưa có sẵn.
+2. **Hợp đồng dữ liệu (Contracts) làm nền móng:** Định nghĩa chuẩn giao tiếp trước để mọi service nói chung một ngôn ngữ, tránh sai lệch mã băm mật mã.
+3. **Thư viện lõi (Core Libraries) độc lập:** Thư viện mật mã toán học và truy cập database phải hoàn chỉnh 100% trước khi ghép vào ứng dụng.
+4. **Ứng dụng nghiệp vụ (Microservices):** Xây dựng theo đúng chiều chảy của dòng dữ liệu (*Ingestion $\rightarrow$ Batching/Signing $\rightarrow$ Storage $\rightarrow$ Real-time Watcher $\rightarrow$ Visual Dashboard*).
+5. **Kịch bản tấn công (Attack Scripts & CLI):** Thực hiện sau cùng để kiểm chứng năng lực tự vệ của toàn bộ hệ thống.
+
+---
+
+## 📊 2. Sơ Đồ Tổng Quan Thứ Tự Triển Khai (Phase Workflow)
+
+```mermaid
+flowchart TD
+    subgraph Phase 1: Nền tảng & Hạ tầng [ĐÃ HOÀN THÀNH]
+        DOK["1. tools/docker<br>(Postgres WAL Logical, Redis, Kafka KRaft)"]
+        CTR["2. libs/contracts<br>(Enums, DTOs, Interfaces, Zod/Class-validator)"]
+    end
+
+    subgraph Phase 2: Trái tim Mật mã học [BƯỚC TIẾP THEO]
+        CRY["3. libs/crypto-core<br>(Canonical JSON, SHA-256, Merkle Tree, Ed25519)"]
+    end
+
+    subgraph Phase 3: Tầng Dữ liệu & Truyền thông
+        DB["4. libs/database<br>(Postgres Schema, WORM Rule cấm UPDATE/DELETE, Migrations)"]
+        BUS["5. libs/event-bus<br>(Kafka Producer/Consumer wrapper với stream key)"]
+    end
+
+    subgraph Phase 4: Microservices Xử lý Lõi
+        LED["6. apps/audit-ledger<br>(Ingestion, Buffer 5-10 logs hoặc 2s, Merkle Tree & Ký số)"]
+        WAL["7. apps/wallet-core<br>(Mock Service tạo giao dịch chuyển tiền bắn Kafka)"]
+    end
+
+    subgraph Phase 5: Giám sát Tức thì & Tự vệ Chủ động
+        WAT["8. apps/tamper-watcher<br>(Lắng nghe CDC Postgres WAL, Telegram Alert trong <200ms)"]
+        CLI["9. apps/audit-cli<br>(CLI kiểm toán O(log N) Merkle Proof, đối chiếu Anchor)"]
+    end
+
+    subgraph Phase 6: Trực quan hóa & Kịch bản Tấn công
+        DSH["10. apps/audit-dashboard<br>(Web Next.js/Vite Real-time Merkle Visualizer)"]
+        ATK["11. tools/scripts<br>(demo-attack-modify, delete, rewrite)"]
+    end
+
+    DOK --> CTR --> CRY --> DB --> BUS --> LED --> WAL --> WAT --> CLI --> DSH --> ATK
+```
+
+---
+
+## 🔍 3. Chi Tiết Từng Bước (Steps), Lý Do "Vì Sao" & Tiêu Chí Nghiệm Thu (Acceptance Criteria)
+
+---
+
+### ✅ BƯỚC 1: `tools/docker` (Hạ tầng Ảo hóa) - [ĐÃ XONG]
+* **Mục đích:** Cung cấp môi trường chạy cơ sở dữ liệu và message broker tại local.
+* **Vì sao làm trước:** Nếu không có PostgreSQL hỗ trợ `wal_level=logical` và Kafka, các service phía sau không thể chạy hay kiểm thử tích hợp (Integration Test).
+* **Thành phần:**
+  * `docker-compose.postgres.yml`: Postgres 16 cấu hình Logical Replication cho CDC.
+  * `docker-compose.redis.yml`: Redis cache & cờ Active Defense (`LOCK_WITHDRAWALS`).
+  * `docker-compose.kafka.yml`: Kafka 3.7 KRaft mode (siêu nhẹ, không cần Zookeeper).
+  * `docker-compose.yml`: File master include 3 file trên.
+
+---
+
+### ✅ BƯỚC 2: `libs/contracts` (Giao ước Dữ liệu & Single Source of Truth) - [ĐÃ XONG]
+* **Mục đích:** Định nghĩa Enums, TypeScript Interfaces và Class DTOs có Decorators (`class-validator`).
+* **Vì sao làm trước:** 
+  * Cả 5 service (`wallet-core`, `audit-ledger`, `tamper-watcher`, `audit-cli`, `audit-dashboard`) đều phụ thuộc vào schema này.
+  * Đảm bảo tính nhất quán của dữ liệu đầu vào. Chỉ cần lệch kiểu dữ liệu hoặc thứ tự trường, mã băm SHA-256 sẽ sai khác và làm sụp đổ toàn bộ cây Merkle.
+* **Tiêu chí nghiệm thu:** Unit test kiểm tra validation DTOs đạt 100% (5/5 passed).
+
+---
+
+### ⏳ BƯỚC 3: `libs/crypto-core` (Trái tim Mật mã học) - [TIẾP THEO]
+* **Mục đích:** Xây dựng toàn bộ thuật toán toán học mật mã độc lập với framework.
+* **Vì sao làm ở bước này:**
+  * Đây là **"vũ khí cốt lõi"** chứng minh năng lực Security Engineering.
+  * Không phụ thuộc vào Database hay Kafka. Chỉ thuần túy là thuật toán Node.js `crypto` và logic dựng cây.
+  * Có thể viết Unit Test kiểm thử toán học 100% trước khi nối vào app.
+* **Các module cần xây dựng:**
+  1. `canonical-json`: Thuật toán chuẩn hóa chuỗi JSON (sắp xếp key alphabet, tránh lỗi nhảy key trong JS).
+  2. `hasher`: SHA-256 Hasher chuẩn RFC 6234.
+  3. `merkle-tree`:
+     * Dựng cây nhị phân Bottom-Up từ danh sách lá (`leafHashes`).
+     * Tự động nhân đôi lá lẻ khi số lượng lá không chia hết cho 2.
+     * Hàm lấy `getRoot()`.
+     * Hàm sinh đường dẫn chứng minh `getProof(index)` độ phức tạp $O(\log N)$.
+     * Hàm kiểm tra độc lập `verifyProof(leafHash, proof, expectedRoot)`.
+  4. `signer-ed25519`:
+     * Sinh cặp khóa Ed25519 (`private_key.pem`, `public_key.pem`).
+     * Ký số lên Merkle Root: `signRoot(root, privateKey)`.
+     * Xác minh chữ ký: `verifySignature(root, signature, publicKey)`.
+* **Tiêu chí nghiệm thu:** Bộ Unit Test Jest với 100% coverage cho Merkle Tree & Ed25519 signing.
+
+---
+
+### ⏳ BƯỚC 4: `libs/database` (Kho Lưu Trữ WORM & Cấu Trúc Bảng)
+* **Mục đích:** Cung cấp tầng truy cập dữ liệu (ORM / Query Builder / Migration) cho PostgreSQL.
+* **Vì sao làm ở bước này:**
+  * `audit-ledger` cần schema bảng để lưu log; `tamper-watcher` cần schema để parse CDC; `audit-cli` cần schema để đọc dữ liệu kiểm toán.
+* **Các module cần xây dựng:**
+  1. Định nghĩa Schema cho 2 bảng:
+     * `audit_logs` (Lá Merkle - Append-Only).
+     * `epoch_blocks` (Khối Epoch chứa Root và Chữ ký số Ed25519).
+  2. **Migration WORM Security Rules:**
+     * Viết SQL Trigger / Postgres Rule chặn cứng quyền `UPDATE` và `DELETE` trên bảng `audit_logs` ngay tại tầng nhân DB.
+     * Cấu hình Database User phân quyền tối thiểu (Least Privilege: chỉ có quyền `INSERT`, `SELECT`).
+* **Tiêu chí nghiệm thu:** Migration chạy thành công vào PostgreSQL container; thử chạy lệnh SQL `UPDATE` bị database từ chối ngay lập tức.
+
+---
+
+### ⏳ BƯỚC 5: `libs/event-bus` (Hạ tầng Giao tiếp Message Stream)
+* **Mục đích:** Đóng gói thư viện Kafka Client (KafkaJS) chuẩn hóa.
+* **Vì sao làm ở bước này:** Tránh việc mỗi app phải tự cấu hình Kafka producer/consumer lặp đi lặp lại.
+* **Các module cần xây dựng:**
+  * `KafkaProducerService`: Bắn sự kiện `AuditEvent` vào topic kèm `streamKey` (ví dụ `walletId`) để phân chia partition.
+  * `KafkaConsumerService`: Consumer wrapper hỗ trợ tự động deserialize và validate bằng DTO của `libs/contracts`.
+
+---
+
+### ⏳ BƯỚC 6: `apps/audit-ledger` (Microservice Xử lý Ingestion & Epoch Engine)
+* **Mục đích:** Trọng tâm xử lý của toàn bộ hệ sinh thái AegisLedger.
+* **Vì sao làm ở bước này:** Sau khi đã có `libs/crypto-core`, `libs/database`, `libs/event-bus`, ta ghép chúng lại thành Ingestion Pipeline.
+* **Luồng xử lý (Data Flow):**
+  1. Consumer nhận sự kiện từ Kafka.
+  2. Đưa vào In-Memory Sliding Window (Buffer):
+     * **Điều kiện chốt Epoch:** Đủ **5 - 10 logs** HOẶC hết **2 giây** (tối ưu demo).
+  3. Khi kích hoạt chốt Epoch:
+     * Gọi `libs/crypto-core` dựng Merkle Tree $\rightarrow$ lấy `merkleRoot`.
+     * Ký chữ ký số Ed25519.
+     * Mở **PostgreSQL Atomic Transaction**: Ghi 5-10 dòng log vào `audit_logs` và ghi 1 dòng vào `epoch_blocks`.
+  4. Bắn sự kiện WebSocket thông báo Epoch mới hình thành (màu xanh) sang Dashboard.
+
+---
+
+### ⏳ BƯỚC 7: `apps/wallet-core` (Microservice Nghiệp vụ Giả lập)
+* **Mục đích:** Mô phỏng ứng dụng tài chính thực tế để phát sinh giao dịch.
+* **Vì sao làm lúc này:** Khi `audit-ledger` đã sẵn sàng đón nhận dữ liệu, `wallet-core` sẽ là nguồn phát sinh dữ liệu thử nghiệm.
+* **API Endpoints:**
+  * `POST /wallets/deposit`: Nạp tiền.
+  * `POST /wallets/transfer`: Chuyển tiền giữa hai ví.
+* **Hành vi:** Khi API được gọi, nó tạo một `AuditEventDto` và đẩy vào Kafka thông qua `libs/event-bus`.
+
+---
+
+### ⏳ BƯỚC 8: `apps/tamper-watcher` (Autonomous Active Defense qua Postgres CDC)
+* **Mục đích:** Giám sát thời gian thực, phát hiện xâm nhập và tự vệ trong `< 200ms`.
+* **Vì sao làm ở bước này:** Cần có dữ liệu thực tế đang ghi vào PostgreSQL thì Watcher mới có luồng WAL để giám sát.
+* **Cơ chế hoạt động:**
+  1. Gắn vào PostgreSQL Logical Replication Stream.
+  2. Bảng `audit_logs` là Append-Only, do đó:
+     * Thấy event `INSERT` $\rightarrow$ Tính nhẩm lại `leafHash` xem có đúng không.
+     * Thấy event **`UPDATE`** hoặc **`DELETE`** $\rightarrow$ **LẬP TỨC BÁO ĐỘNG ĐỎ TRONG < 200MS**:
+       * Bắn tin nhắn khẩn cấp qua **Telegram Bot**.
+       * Gửi tín hiệu WebSocket cảnh báo sang Web Dashboard.
+       * Set cờ Redis: `LOCK_WITHDRAWALS=true` (Active Defense: đóng băng cổng rút tiền).
+
+---
+
+### ⏳ BƯỚC 9: `apps/audit-cli` (Công cụ Kiểm toán Độc lập)
+* **Mục đích:** Công cụ dòng lệnh dành cho kiểm toán viên bên thứ ba hoặc người dùng tự xác minh tính toàn vẹn.
+* **Lệnh hỗ trợ:**
+  * `audit-cli verify`: Quét toàn bộ chuỗi Epoch và đối chiếu với External Anchor.
+  * `audit-cli prove --seq <number>`: Xuất bằng chứng mật mã Merkle Proof $O(\log N)$ cho một giao dịch cụ thể để người dùng tự kiểm tra trên máy cá nhân.
+
+---
+
+### ⏳ BƯỚC 10: `apps/audit-dashboard` (Giao diện Web Trực quan Real-time)
+* **Mục đích:** Trực quan hóa toàn bộ hệ thống bằng Next.js/Vite + Socket.io.
+* **Tính năng hiển thị:**
+  * Sơ đồ tương tác Cây Merkle (Visual Merkle Tree View).
+  * Hiển thị trạng thái các Epoch nối xích với nhau (màu xanh lá).
+  * Khi có cuộc tấn công sửa DB: Khối bị sửa lập tức nhấp nháy chuyển sang **MÀU ĐỎ**, còi báo động hú trên trình duyệt.
+
+---
+
+### ⏳ BƯỚC 11: `tools/scripts` (Bộ Kịch bản Tấn công Demo Showcase)
+* **Mục đích:** Bộ script chuẩn bị sẵn cho buổi phỏng vấn hoặc quay video demo kỹ thuật.
+* **Các kịch bản:**
+  * `demo-attack-modify.sh`: Hacker chạy lệnh SQL sửa số tiền ở Block cũ $\rightarrow$ Watcher bắt trong < 200ms qua CDC.
+  * `demo-attack-delete.sh`: Hacker chạy SQL xóa 1 dòng log $\rightarrow$ Watcher báo gãy chuỗi sequence.
+  * `demo-attack-rewrite.sh`: Hacker sửa data và tự tính lại Root nội bộ $\rightarrow$ Bị bắt quả tang khi đối chiếu với External Anchor.
+
+---
+
+## 📌 Bảng Tóm Tắt Trạng Thái & Kế Hoạch Tiếp Theo
+
+| Bước | Thành phần | Trạng thái | Nhiệm vụ chính |
+| :---: | :--- | :---: | :--- |
+| **1** | `tools/docker` |  **Hoàn thành** | Postgres WAL logical, Redis, Kafka KRaft |
+| **2** | `libs/contracts` |  **Hoàn thành** | Enums, DTOs (`class-validator`), Interfaces, Unit tests passed |
+| **3** | `libs/crypto-core` | 🎯 **Ưu tiên tiếp theo** | Canonical JSON, SHA-256, Merkle Tree $O(\log N)$, Ed25519 Signing |
+| **4** | `libs/database` | ⏳ Chờ | Schema WORM, Database Rules chặn UPDATE/DELETE |
+| **5** | `libs/event-bus` | ⏳ Chờ | Kafka Producer/Consumer wrappers |
+| **6** | `apps/audit-ledger` | ⏳ Chờ | Ingestion, Window Buffer 5-10 logs/2s, Merkle chốt sổ |
+| **7** | `apps/wallet-core` | ⏳ Chờ | Mock API nạp/chuyển tiền bắn Kafka |
+| **8** | `apps/tamper-watcher`| ⏳ Chờ | CDC Logical Replication, Telegram Alert, Active Defense |
+| **9** | `apps/audit-cli` | ⏳ Chờ | CLI verify chuỗi & sinh Merkle Proof |
+| **10**| `apps/audit-dashboard`| ⏳ Chờ | Web giao diện cây Merkle real-time |
+| **11**| `tools/scripts` | ⏳ Chờ | 3 kịch bản demo tấn công |
+
+---
+
+*Tài liệu này là kim chỉ nam chính thức điều hướng toàn bộ quá trình phát triển của dự án AegisLedger.*
