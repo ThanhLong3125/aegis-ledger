@@ -2,13 +2,31 @@
   "name": "@aegis-ledger-workspace/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "docker:up": "docker compose -f tools/docker/docker-compose.yml --env-file tools/docker/.env up -d",
+    "docker:down": "docker compose -f tools/docker/docker-compose.yml --env-file tools/docker/.env down",
+    "docker:postgres": "docker compose -f tools/docker/docker-compose.postgres.yml --env-file tools/docker/.env up -d",
+    "docker:redis": "docker compose -f tools/docker/docker-compose.redis.yml --env-file tools/docker/.env up -d",
+    "docker:kafka": "docker compose -f tools/docker/docker-compose.kafka.yml --env-file tools/docker/.env up -d",
+    "docker:status": "docker compose -f tools/docker/docker-compose.yml ps"
+  },
   "private": true,
-  "dependencies": {},
   "devDependencies": {
-    "@nx/js": "23.3.0",
+    "@nx/js": "^23.3.0",
+    "@nx/nest": "^23.3.0",
+    "@nx/node": "^23.3.0",
     "@nx/workspace": "23.3.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.5",
+    "jest": "^30.5.2",
     "nx": "23.3.0",
+    "ts-jest": "^29.4.14",
+    "ts-node": "^10.9.2",
     "typescript": "~6.0.3"
+  },
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "reflect-metadata": "^0.2.2"
   }
 }

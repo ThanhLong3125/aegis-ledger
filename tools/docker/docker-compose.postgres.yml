@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: aegis_postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aegis_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aegis_secure_password_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-aegis_ledger_db}
+    # Cấu hình WAL level logical để hỗ trợ CDC (Change Data Capture) cho tamper-watcher
+    command: >
+      postgres 
+      -c wal_level=logical 
+      -c max_replication_slots=5 
+      -c max_wal_senders=5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aegis_admin} -d ${POSTGRES_DB:-aegis_ledger_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aegis_network
+
+volumes:
+  postgres_data:
+    name: aegis_postgres_data
+
+networks:
+  aegis_network:
+    name: aegis_network
+    driver: bridge

@@ -1,0 +1,15 @@
+{
+  "name": "@aegis/contracts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/contracts/src",
+  "projectType": "library",
+  "tags": ["scope:contracts", "type:lib"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "libs/contracts/tsconfig.lib.json"
+      }
+    }
+  }
+}

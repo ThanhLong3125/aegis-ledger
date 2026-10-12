@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2022",
+    "module": "commonjs",
+    "lib": ["es2022"],
+    "types": ["node", "jest"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@aegis/contracts": ["libs/contracts/src/index.ts"],
+      "@aegis/crypto-core": ["libs/crypto-core/src/index.ts"],
+      "@aegis/database": ["libs/database/src/index.ts"],
+      "@aegis/event-bus": ["libs/event-bus/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

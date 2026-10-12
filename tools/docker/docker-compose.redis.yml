@@ -1,0 +1,29 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: aegis_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: >
+      redis-server 
+      --requirepass ${REDIS_PASSWORD:-aegis_redis_pass_2026}
+      --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-aegis_redis_pass_2026}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - aegis_network
+
+volumes:
+  redis_data:
+    name: aegis_redis_data
+
+networks:
+  aegis_network:
+    name: aegis_network
+    external: true

@@ -1,0 +1,33 @@
+export enum AuditAction {
+  // Wallet domain
+  WALLET_DEPOSIT = 'WALLET_DEPOSIT',
+  WALLET_WITHDRAW = 'WALLET_WITHDRAW',
+  WALLET_TRANSFER = 'WALLET_TRANSFER',
+
+  // User & Auth domain
+  USER_LOGIN_SUCCESS = 'USER_LOGIN_SUCCESS',
+  USER_LOGIN_FAILED = 'USER_LOGIN_FAILED',
+  USER_LOGOUT = 'USER_LOGOUT',
+  USER_PASSWORD_CHANGED = 'USER_PASSWORD_CHANGED',
+
+  // Admin & Security domain
+  ROLE_ASSIGNED = 'ROLE_ASSIGNED',
+  ROLE_REVOKED = 'ROLE_REVOKED',
+  SECURITY_POLICY_UPDATED = 'SECURITY_POLICY_UPDATED',
+  SYSTEM_EMERGENCY_LOCK = 'SYSTEM_EMERGENCY_LOCK',
+}
+
+export enum BreachType {
+  UNAUTHORIZED_UPDATE = 'UNAUTHORIZED_UPDATE', // SQL UPDATE can thiệp DB
+  UNAUTHORIZED_DELETE = 'UNAUTHORIZED_DELETE', // SQL DELETE làm gãy chuỗi sequence
+  HISTORICAL_REWRITE = 'HISTORICAL_REWRITE',   // DB bị sửa và tự tính lại root (lệch External Anchor)
+  SIGNATURE_FORGERY = 'SIGNATURE_FORGERY',     // Chữ ký Ed25519 không khớp Public Key
+  SEQUENCE_GAP = 'SEQUENCE_GAP',               // Có lỗ hổng sequence nhảy cóc
+}
+
+export enum AlertSeverity {
+  INFO = 'INFO',
+  WARNING = 'WARNING',
+  HIGH = 'HIGH',
+  CRITICAL = 'CRITICAL',
+}

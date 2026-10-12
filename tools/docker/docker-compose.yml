@@ -1,0 +1,5 @@
+# File compose tổng hợp để khởi động toàn bộ hạ tầng cùng lúc
+include:
+  - docker-compose.postgres.yml
+  - docker-compose.redis.yml
+  - docker-compose.kafka.yml
