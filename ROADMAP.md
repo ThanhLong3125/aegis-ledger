@@ -28,13 +28,13 @@ flowchart TD
         CTR["2. libs/contracts<br>(Enums, DTOs, Interfaces, Zod/Class-validator)"]
     end
 
-    subgraph Phase 2: Trái tim Mật mã học [BƯỚC TIẾP THEO]
+    subgraph Phase 2: Trái tim Mật mã học [ĐÃ HOÀN THÀNH]
         CRY["3. libs/crypto-core<br>(Canonical JSON, SHA-256, Merkle Tree, Ed25519)"]
     end
 
     subgraph Phase 3: Tầng Dữ liệu & Truyền thông
-        DB["4. libs/database<br>(Postgres Schema, WORM Rule cấm UPDATE/DELETE, Migrations)"]
-        BUS["5. libs/event-bus<br>(Kafka Producer/Consumer wrapper với stream key)"]
+        DB["4. libs/database<br>(Prisma WORM Datastore, Triggers cấm UPDATE/DELETE) [ĐÃ XONG]"]
+        BUS["5. libs/event-bus<br>(Kafka Producer/Consumer wrapper với stream key) [BƯỚC TIẾP THEO]"]
     end
 
     subgraph Phase 4: Microservices Xử lý Lõi
@@ -81,7 +81,7 @@ flowchart TD
 
 ---
 
-### ⏳ BƯỚC 3: `libs/crypto-core` (Trái tim Mật mã học) - [TIẾP THEO]
+### ✅ BƯỚC 3: `libs/crypto-core` (Trái tim Mật mã học) - [ĐÃ XONG]
 * **Mục đích:** Xây dựng toàn bộ thuật toán toán học mật mã độc lập với framework.
 * **Vì sao làm ở bước này:**
   * Đây là **"vũ khí cốt lõi"** chứng minh năng lực Security Engineering.
@@ -104,18 +104,21 @@ flowchart TD
 
 ---
 
-### ⏳ BƯỚC 4: `libs/database` (Kho Lưu Trữ WORM & Cấu Trúc Bảng)
-* **Mục đích:** Cung cấp tầng truy cập dữ liệu (ORM / Query Builder / Migration) cho PostgreSQL.
+### ✅ BƯỚC 4: `libs/database` (Kho Lưu Trữ WORM & Prisma Schema) - [ĐÃ XONG]
+* **Mục đích:** Cung cấp tầng truy cập dữ liệu trực quan bằng Prisma ORM cho PostgreSQL kết hợp WORM Security Rules.
 * **Vì sao làm ở bước này:**
   * `audit-ledger` cần schema bảng để lưu log; `tamper-watcher` cần schema để parse CDC; `audit-cli` cần schema để đọc dữ liệu kiểm toán.
-* **Các module cần xây dựng:**
-  1. Định nghĩa Schema cho 2 bảng:
+* **Các module đã xây dựng:**
+  1. Định nghĩa Prisma Schema cho 3 bảng:
      * `audit_logs` (Lá Merkle - Append-Only).
      * `epoch_blocks` (Khối Epoch chứa Root và Chữ ký số Ed25519).
-  2. **Migration WORM Security Rules:**
-     * Viết SQL Trigger / Postgres Rule chặn cứng quyền `UPDATE` và `DELETE` trên bảng `audit_logs` ngay tại tầng nhân DB.
-     * Cấu hình Database User phân quyền tối thiểu (Least Privilege: chỉ có quyền `INSERT`, `SELECT`).
-* **Tiêu chí nghiệm thu:** Migration chạy thành công vào PostgreSQL container; thử chạy lệnh SQL `UPDATE` bị database từ chối ngay lập tức.
+     * `external_anchors` (Mốc neo kiểm toán ngoại vi).
+  2. **WORM Security Rules & CDC:**
+     * Viết Trigger PL/pgSQL chặn cứng quyền `UPDATE` và `DELETE` trên bảng `audit_logs` ngay tại tầng nhân DB (mã lỗi `55000`).
+     * Trigger bảo vệ tính bất biến của các trường mật mã trên `epoch_blocks` (`merkle_root`, `signature`...).
+     * Kích hoạt `REPLICA IDENTITY FULL` cho PostgreSQL CDC.
+     * Cung cấp `EpochBatchService` thực thi Atomic Transaction cho Epoch chốt sổ.
+* **Tiêu chí nghiệm thu:** Bộ Unit/Integration Test Jest chạy trên PostgreSQL container đạt **100% (11/11 passed)**; thử chạy lệnh SQL `UPDATE` / `DELETE` bị database từ chối ngay lập tức.
 
 ---
 
@@ -199,9 +202,9 @@ flowchart TD
 | :---: | :--- | :---: | :--- |
 | **1** | `tools/docker` |  **Hoàn thành** | Postgres WAL logical, Redis, Kafka KRaft |
 | **2** | `libs/contracts` |  **Hoàn thành** | Enums, DTOs (`class-validator`), Interfaces, Unit tests passed |
-| **3** | `libs/crypto-core` | 🎯 **Ưu tiên tiếp theo** | Canonical JSON, SHA-256, Merkle Tree $O(\log N)$, Ed25519 Signing |
-| **4** | `libs/database` | ⏳ Chờ | Schema WORM, Database Rules chặn UPDATE/DELETE |
-| **5** | `libs/event-bus` | ⏳ Chờ | Kafka Producer/Consumer wrappers |
+| **3** | `libs/crypto-core` | ✅ **Hoàn thành** | Canonical JSON, SHA-256, Merkle Tree $O(\log N)$, Ed25519 Signing (24/24 tests passed) |
+| **4** | `libs/database` | ✅ **Hoàn thành** | Prisma WORM Datastore, PostgreSQL Triggers chặn UPDATE/DELETE (11/11 tests passed) |
+| **5** | `libs/event-bus` | 🎯 **Ưu tiên tiếp theo** | Kafka Producer/Consumer wrappers |
 | **6** | `apps/audit-ledger` | ⏳ Chờ | Ingestion, Window Buffer 5-10 logs/2s, Merkle chốt sổ |
 | **7** | `apps/wallet-core` | ⏳ Chờ | Mock API nạp/chuyển tiền bắn Kafka |
 | **8** | `apps/tamper-watcher`| ⏳ Chờ | CDC Logical Replication, Telegram Alert, Active Defense |

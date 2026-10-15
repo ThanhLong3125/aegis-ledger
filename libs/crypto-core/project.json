@@ -1,0 +1,15 @@
+{
+  "name": "@aegis/crypto-core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/crypto-core/src",
+  "projectType": "library",
+  "tags": ["scope:crypto-core", "type:lib"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "libs/crypto-core/tsconfig.lib.json"
+      }
+    }
+  }
+}
