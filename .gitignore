@@ -45,4 +45,5 @@ Thumbs.db
 .claude/settings.local.json
 
 /tools/docker/.env
+.env
 env

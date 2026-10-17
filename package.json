@@ -8,7 +8,12 @@
     "docker:postgres": "docker compose -f tools/docker/docker-compose.postgres.yml --env-file tools/docker/.env up -d",
     "docker:redis": "docker compose -f tools/docker/docker-compose.redis.yml --env-file tools/docker/.env up -d",
     "docker:kafka": "docker compose -f tools/docker/docker-compose.kafka.yml --env-file tools/docker/.env up -d",
-    "docker:status": "docker compose -f tools/docker/docker-compose.yml ps"
+    "docker:status": "docker compose -f tools/docker/docker-compose.yml ps",
+    "test:contracts": "jest --config libs/contracts/jest.config.js",
+    "test:crypto": "jest --config libs/crypto-core/jest.config.js",
+    "test:database": "jest --config libs/database/jest.config.js --runInBand",
+    "db:push": "prisma db push --schema=libs/database/prisma/schema.prisma",
+    "db:generate": "prisma generate --schema=libs/database/prisma/schema.prisma"
   },
   "private": true,
   "devDependencies": {
@@ -20,13 +25,18 @@
     "@types/node": "^26.6.5",
     "jest": "^30.5.2",
     "nx": "23.3.0",
+    "prisma": "^6.19.3",
     "ts-jest": "^29.4.14",
     "ts-node": "^10.9.2",
     "typescript": "~6.0.3"
   },
   "dependencies": {
+    "@nestjs/common": "^11.2.7",
+    "@nestjs/core": "^11.2.7",
+    "@prisma/client": "^6.19.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
   }
 }

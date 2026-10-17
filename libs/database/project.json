@@ -1,0 +1,33 @@
+{
+  "name": "@aegis/database",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/database/src",
+  "projectType": "library",
+  "tags": ["scope:database", "type:lib"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "libs/database/tsconfig.lib.json"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "jest --config libs/database/jest.config.js --runInBand"
+      }
+    },
+    "db:push": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx prisma db push --schema=libs/database/prisma/schema.prisma"
+      }
+    },
+    "db:generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx prisma generate --schema=libs/database/prisma/schema.prisma"
+      }
+    }
+  }
+}

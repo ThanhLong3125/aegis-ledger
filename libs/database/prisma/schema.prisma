@@ -1,0 +1,67 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// Bảng lưu vết các lá Merkle (Append-Only WORM)
+model AuditLog {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  sequence    BigInt   @unique
+  epochNumber BigInt   @map("epoch_number")
+  timestamp   DateTime @db.Timestamptz(6)
+  actor       Json     @db.JsonB
+  action      String   @db.VarChar(100)
+  resource    Json     @db.JsonB
+  payload     Json     @db.JsonB
+  leafHash    String   @map("leaf_hash") @db.VarChar(64)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  epochBlock  EpochBlock @relation(fields: [epochNumber], references: [epochNumber], onDelete: Restrict)
+
+  @@index([epochNumber], name: "idx_audit_logs_epoch_number")
+  @@index([leafHash], name: "idx_audit_logs_leaf_hash")
+  @@index([timestamp], name: "idx_audit_logs_timestamp")
+  @@map("audit_logs")
+}
+
+/// Bảng lưu các khối Epoch (Merkle Root & Chữ ký số Ed25519)
+model EpochBlock {
+  epochNumber       BigInt   @id @map("epoch_number")
+  startSequence     BigInt   @map("start_sequence")
+  endSequence       BigInt   @map("end_sequence")
+  totalLogs         Int      @map("total_logs")
+  merkleRoot        String   @map("merkle_root") @db.VarChar(64)
+  previousEpochRoot String   @map("previous_epoch_root") @db.VarChar(64)
+  signature         String   @db.VarChar(128)
+  signerPublicKey   String   @map("signer_public_key") @db.VarChar(64)
+  anchored          Boolean  @default(false)
+  anchorTxHash      String?  @map("anchor_tx_hash") @db.VarChar(128)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  auditLogs         AuditLog[]
+  externalAnchors   ExternalAnchor[]
+
+  @@index([merkleRoot], name: "idx_epoch_blocks_merkle_root")
+  @@index([anchored], name: "idx_epoch_blocks_anchored")
+  @@map("epoch_blocks")
+}
+
+/// Bảng lưu vết các mốc kiểm toán được neo ngoại vi
+model ExternalAnchor {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  epochNumber BigInt   @map("epoch_number")
+  merkleRoot  String   @map("merkle_root") @db.VarChar(64)
+  anchorType  String   @map("anchor_type") @db.VarChar(50)
+  txHash      String   @map("tx_hash") @db.VarChar(128)
+  anchoredAt  DateTime @default(now()) @map("anchored_at") @db.Timestamptz(6)
+
+  epochBlock  EpochBlock @relation(fields: [epochNumber], references: [epochNumber], onDelete: Restrict)
+
+  @@index([epochNumber], name: "idx_external_anchors_epoch_number")
+  @@index([merkleRoot], name: "idx_external_anchors_merkle_root")
+  @@map("external_anchors")
+}

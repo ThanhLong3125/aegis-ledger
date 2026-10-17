@@ -116,9 +116,10 @@ flowchart TD
   2. **WORM Security Rules & CDC:**
      * Viết Trigger PL/pgSQL chặn cứng quyền `UPDATE` và `DELETE` trên bảng `audit_logs` ngay tại tầng nhân DB (mã lỗi `55000`).
      * Trigger bảo vệ tính bất biến của các trường mật mã trên `epoch_blocks` (`merkle_root`, `signature`...).
+     * Trigger cấm UPDATE và DELETE trên `external_anchors` bảo vệ mốc neo ngoại vi.
      * Kích hoạt `REPLICA IDENTITY FULL` cho PostgreSQL CDC.
      * Cung cấp `EpochBatchService` thực thi Atomic Transaction cho Epoch chốt sổ.
-* **Tiêu chí nghiệm thu:** Bộ Unit/Integration Test Jest chạy trên PostgreSQL container đạt **100% (11/11 passed)**; thử chạy lệnh SQL `UPDATE` / `DELETE` bị database từ chối ngay lập tức.
+* **Tiêu chí nghiệm thu:** Bộ Unit/Integration Test Jest chạy trên PostgreSQL container đạt **100% (13/13 passed)**; thử chạy lệnh SQL `UPDATE` / `DELETE` bị database từ chối ngay lập tức.
 
 ---
 
@@ -203,7 +204,7 @@ flowchart TD
 | **1** | `tools/docker` |  **Hoàn thành** | Postgres WAL logical, Redis, Kafka KRaft |
 | **2** | `libs/contracts` |  **Hoàn thành** | Enums, DTOs (`class-validator`), Interfaces, Unit tests passed |
 | **3** | `libs/crypto-core` | ✅ **Hoàn thành** | Canonical JSON, SHA-256, Merkle Tree $O(\log N)$, Ed25519 Signing (24/24 tests passed) |
-| **4** | `libs/database` | ✅ **Hoàn thành** | Prisma WORM Datastore, PostgreSQL Triggers chặn UPDATE/DELETE (11/11 tests passed) |
+| **4** | `libs/database` | ✅ **Hoàn thành** | Prisma WORM Datastore, PostgreSQL Triggers chặn UPDATE/DELETE trên cả 3 bảng (13/13 tests passed) |
 | **5** | `libs/event-bus` | 🎯 **Ưu tiên tiếp theo** | Kafka Producer/Consumer wrappers |
 | **6** | `apps/audit-ledger` | ⏳ Chờ | Ingestion, Window Buffer 5-10 logs/2s, Merkle chốt sổ |
 | **7** | `apps/wallet-core` | ⏳ Chờ | Mock API nạp/chuyển tiền bắn Kafka |
