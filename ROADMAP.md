@@ -32,9 +32,9 @@ flowchart TD
         CRY["3. libs/crypto-core<br>(Canonical JSON, SHA-256, Merkle Tree, Ed25519)"]
     end
 
-    subgraph Phase 3: Tầng Dữ liệu & Truyền thông
+    subgraph Phase 3: Tầng Dữ liệu & Truyền thông [ĐÃ HOÀN THÀNH]
         DB["4. libs/database<br>(Prisma WORM Datastore, Triggers cấm UPDATE/DELETE) [ĐÃ XONG]"]
-        BUS["5. libs/event-bus<br>(Kafka Producer/Consumer wrapper với stream key) [BƯỚC TIẾP THEO]"]
+        BUS["5. libs/event-bus<br>(Kafka Producer/Consumer wrapper với stream key) [ĐÃ XONG]"]
     end
 
     subgraph Phase 4: Microservices Xử lý Lõi
@@ -123,12 +123,14 @@ flowchart TD
 
 ---
 
-### ⏳ BƯỚC 5: `libs/event-bus` (Hạ tầng Giao tiếp Message Stream)
+### ✅ BƯỚC 5: `libs/event-bus` (Hạ tầng Giao tiếp Message Stream) - [ĐÃ XONG]
 * **Mục đích:** Đóng gói thư viện Kafka Client (KafkaJS) chuẩn hóa.
 * **Vì sao làm ở bước này:** Tránh việc mỗi app phải tự cấu hình Kafka producer/consumer lặp đi lặp lại.
-* **Các module cần xây dựng:**
-  * `KafkaProducerService`: Bắn sự kiện `AuditEvent` vào topic kèm `streamKey` (ví dụ `walletId`) để phân chia partition.
-  * `KafkaConsumerService`: Consumer wrapper hỗ trợ tự động deserialize và validate bằng DTO của `libs/contracts`.
+* **Các module đã xây dựng:**
+  * `KafkaProducerService`: Bắn sự kiện `AuditEvent` vào topic kèm `streamKey` (ví dụ `walletId`) để phân chia partition, hỗ trợ Idempotent Producer và Distributed Tracing headers.
+  * `KafkaConsumerService`: Consumer wrapper hỗ trợ tự động deserialize và validate bằng DTO của `libs/contracts`, cơ chế Poison Pill Protection chuyển hướng sang Dead Letter Queue (`.dlq`).
+  * `EventBusModule`: Dynamic Module NestJS hỗ trợ `forRoot()` và `forRootAsync()`.
+* **Tiêu chí nghiệm thu:** Bộ Unit Test Jest với **100% coverage (8/8 tests passed)** kiểm thử thành công Producer, Consumer DTO validation, DLQ routing và Dynamic Module.
 
 ---
 
@@ -205,8 +207,8 @@ flowchart TD
 | **2** | `libs/contracts` |  **Hoàn thành** | Enums, DTOs (`class-validator`), Interfaces, Unit tests passed |
 | **3** | `libs/crypto-core` | ✅ **Hoàn thành** | Canonical JSON, SHA-256, Merkle Tree $O(\log N)$, Ed25519 Signing (24/24 tests passed) |
 | **4** | `libs/database` | ✅ **Hoàn thành** | Prisma WORM Datastore, PostgreSQL Triggers chặn UPDATE/DELETE trên cả 3 bảng (13/13 tests passed) |
-| **5** | `libs/event-bus` | 🎯 **Ưu tiên tiếp theo** | Kafka Producer/Consumer wrappers |
-| **6** | `apps/audit-ledger` | ⏳ Chờ | Ingestion, Window Buffer 5-10 logs/2s, Merkle chốt sổ |
+| **5** | `libs/event-bus` | ✅ **Hoàn thành** | Kafka Producer/Consumer wrappers, DTO auto-validation, DLQ routing (8/8 tests passed) |
+| **6** | `apps/audit-ledger` | 🎯 **Ưu tiên tiếp theo** | Ingestion, Window Buffer 5-10 logs/2s, Merkle chốt sổ |
 | **7** | `apps/wallet-core` | ⏳ Chờ | Mock API nạp/chuyển tiền bắn Kafka |
 | **8** | `apps/tamper-watcher`| ⏳ Chờ | CDC Logical Replication, Telegram Alert, Active Defense |
 | **9** | `apps/audit-cli` | ⏳ Chờ | CLI verify chuỗi & sinh Merkle Proof |

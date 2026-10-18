@@ -12,11 +12,13 @@
     "test:contracts": "jest --config libs/contracts/jest.config.js",
     "test:crypto": "jest --config libs/crypto-core/jest.config.js",
     "test:database": "jest --config libs/database/jest.config.js --runInBand",
+    "test:event-bus": "jest --config libs/event-bus/jest.config.js",
     "db:push": "prisma db push --schema=libs/database/prisma/schema.prisma",
     "db:generate": "prisma generate --schema=libs/database/prisma/schema.prisma"
   },
   "private": true,
   "devDependencies": {
+    "@nestjs/testing": "^11.2.7",
     "@nx/js": "^23.3.0",
     "@nx/nest": "^23.3.0",
     "@nx/node": "^23.3.0",
@@ -36,6 +38,7 @@
     "@prisma/client": "^6.19.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "kafkajs": "^2.2.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   }

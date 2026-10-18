@@ -1,0 +1,15 @@
+{
+  "name": "@aegis/event-bus",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/event-bus/src",
+  "projectType": "library",
+  "tags": ["scope:event-bus", "type:lib"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "libs/event-bus/tsconfig.lib.json"
+      }
+    }
+  }
+}
