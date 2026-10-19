@@ -13,6 +13,7 @@
     "test:crypto": "jest --config libs/crypto-core/jest.config.js",
     "test:database": "jest --config libs/database/jest.config.js --runInBand",
     "test:event-bus": "jest --config libs/event-bus/jest.config.js",
+    "test:audit-ledger": "jest --config apps/audit-ledger/jest.config.js --runInBand",
     "db:push": "prisma db push --schema=libs/database/prisma/schema.prisma",
     "db:generate": "prisma generate --schema=libs/database/prisma/schema.prisma"
   },

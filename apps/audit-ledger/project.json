@@ -1,0 +1,37 @@
+{
+  "name": "audit-ledger",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/audit-ledger/src",
+  "projectType": "application",
+  "tags": ["scope:audit-ledger", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/audit-ledger",
+        "main": "apps/audit-ledger/src/main.ts",
+        "tsConfig": "apps/audit-ledger/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register apps/audit-ledger/src/main.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "apps/audit-ledger/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "jest --config apps/audit-ledger/jest.config.js --runInBand"
+      }
+    }
+  }
+}

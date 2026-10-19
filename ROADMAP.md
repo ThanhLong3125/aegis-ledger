@@ -38,7 +38,7 @@ flowchart TD
     end
 
     subgraph Phase 4: Microservices Xử lý Lõi
-        LED["6. apps/audit-ledger<br>(Ingestion, Buffer 5-10 logs hoặc 2s, Merkle Tree & Ký số)"]
+        LED["6. apps/audit-ledger<br>(Ingestion, Buffer 5-10 logs hoặc 2s, Merkle Tree & Ký số) [ĐÃ XONG]"]
         WAL["7. apps/wallet-core<br>(Mock Service tạo giao dịch chuyển tiền bắn Kafka)"]
     end
 
@@ -134,18 +134,17 @@ flowchart TD
 
 ---
 
-### ⏳ BƯỚC 6: `apps/audit-ledger` (Microservice Xử lý Ingestion & Epoch Engine)
+### ✅ BƯỚC 6: `apps/audit-ledger` (Microservice Xử lý Ingestion & Epoch Engine) - [ĐÃ XONG]
 * **Mục đích:** Trọng tâm xử lý của toàn bộ hệ sinh thái AegisLedger.
 * **Vì sao làm ở bước này:** Sau khi đã có `libs/crypto-core`, `libs/database`, `libs/event-bus`, ta ghép chúng lại thành Ingestion Pipeline.
-* **Luồng xử lý (Data Flow):**
-  1. Consumer nhận sự kiện từ Kafka.
-  2. Đưa vào In-Memory Sliding Window (Buffer):
-     * **Điều kiện chốt Epoch:** Đủ **5 - 10 logs** HOẶC hết **2 giây** (tối ưu demo).
-  3. Khi kích hoạt chốt Epoch:
-     * Gọi `libs/crypto-core` dựng Merkle Tree $\rightarrow$ lấy `merkleRoot`.
-     * Ký chữ ký số Ed25519.
-     * Mở **PostgreSQL Atomic Transaction**: Ghi 5-10 dòng log vào `audit_logs` và ghi 1 dòng vào `epoch_blocks`.
-  4. Bắn sự kiện WebSocket thông báo Epoch mới hình thành (màu xanh) sang Dashboard.
+* **Các module đã xây dựng:**
+  * `inbound/`: `AuditEventConsumer` lắng nghe Kafka topic `audit.events`, validate schema `AuditEventDto`, cách ly poison pills vào DLQ.
+  * `buffer/`: `SlidingWindowService` với cơ chế Dual-Trigger (ngưỡng dung lượng 5-10 logs hoặc timeout 2s), `BufferMutex` chống race-condition.
+  * `engine/`: `EpochEngineService` tính toán Leaf Hashes (SHA-256 kèm domain separation `0x00`), dựng Merkle Tree nhị phân, ký số Ed25519; `SequenceTrackerService` đảm bảo sequence tăng dần liên tục ($1, 2, 3 \dots$).
+  * `keys/`: `ValidatorKeyProvider` quản lý cặp khóa Ed25519 và sinh raw hex 64 ký tự tương thích cột `signer_public_key`.
+  * `outbound/`: `EpochPersistenceService` gọi `EpochBatchService` commit nguyên tử mảng logs và epoch block vào PostgreSQL WORM; `EpochBroadcasterService` phát sự kiện real-time.
+  * `main.ts`: Bootstrap NestJS Application Context kèm hook Graceful Shutdown bảo toàn 100% dữ liệu trong buffer khi tắt service.
+* **Tiêu chí nghiệm thu:** Toàn bộ 3 test suites với **100% tests passed (9/9 passed)** gồm Unit test Buffer, Unit test Epoch Engine, và E2E Integration test trên PostgreSQL container thực tế.
 
 ---
 
@@ -208,8 +207,8 @@ flowchart TD
 | **3** | `libs/crypto-core` | ✅ **Hoàn thành** | Canonical JSON, SHA-256, Merkle Tree $O(\log N)$, Ed25519 Signing (24/24 tests passed) |
 | **4** | `libs/database` | ✅ **Hoàn thành** | Prisma WORM Datastore, PostgreSQL Triggers chặn UPDATE/DELETE trên cả 3 bảng (13/13 tests passed) |
 | **5** | `libs/event-bus` | ✅ **Hoàn thành** | Kafka Producer/Consumer wrappers, DTO auto-validation, DLQ routing (8/8 tests passed) |
-| **6** | `apps/audit-ledger` | 🎯 **Ưu tiên tiếp theo** | Ingestion, Window Buffer 5-10 logs/2s, Merkle chốt sổ |
-| **7** | `apps/wallet-core` | ⏳ Chờ | Mock API nạp/chuyển tiền bắn Kafka |
+| **6** | `apps/audit-ledger` | ✅ **Hoàn thành** | Ingestion pipeline, Dual-trigger Buffer (size/time), Merkle Tree, Ed25519, PostgreSQL WORM atomic commit (9/9 tests passed) |
+| **7** | `apps/wallet-core` | 🎯 **Ưu tiên tiếp theo** | Mock API nạp/chuyển tiền bắn Kafka |
 | **8** | `apps/tamper-watcher`| ⏳ Chờ | CDC Logical Replication, Telegram Alert, Active Defense |
 | **9** | `apps/audit-cli` | ⏳ Chờ | CLI verify chuỗi & sinh Merkle Proof |
 | **10**| `apps/audit-dashboard`| ⏳ Chờ | Web giao diện cây Merkle real-time |
