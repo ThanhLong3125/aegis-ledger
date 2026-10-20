@@ -1,0 +1,37 @@
+{
+  "name": "wallet-core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/wallet-core/src",
+  "projectType": "application",
+  "tags": ["scope:wallet-core", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/wallet-core",
+        "main": "apps/wallet-core/src/main.ts",
+        "tsConfig": "apps/wallet-core/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register apps/wallet-core/src/main.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "apps/wallet-core/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "jest --config apps/wallet-core/jest.config.js --runInBand"
+      }
+    }
+  }
+}

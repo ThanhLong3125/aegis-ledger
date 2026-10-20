@@ -14,6 +14,7 @@
     "test:database": "jest --config libs/database/jest.config.js --runInBand",
     "test:event-bus": "jest --config libs/event-bus/jest.config.js",
     "test:audit-ledger": "jest --config apps/audit-ledger/jest.config.js --runInBand",
+    "test:wallet-core": "jest --config apps/wallet-core/jest.config.js --runInBand",
     "db:push": "prisma db push --schema=libs/database/prisma/schema.prisma",
     "db:generate": "prisma generate --schema=libs/database/prisma/schema.prisma"
   },
@@ -26,9 +27,11 @@
     "@nx/workspace": "23.3.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.5",
+    "@types/supertest": "^6.0.3",
     "jest": "^30.5.2",
     "nx": "23.3.0",
     "prisma": "^6.19.3",
+    "supertest": "^7.3.1",
     "ts-jest": "^29.4.14",
     "ts-node": "^10.9.2",
     "typescript": "~6.0.3"
@@ -36,9 +39,12 @@
   "dependencies": {
     "@nestjs/common": "^11.2.7",
     "@nestjs/core": "^11.2.7",
+    "@nestjs/platform-express": "^11.2.7",
     "@prisma/client": "^6.19.3",
+    "@types/ioredis": "^5.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "ioredis": "^5.11.1",
     "kafkajs": "^2.2.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"

@@ -148,13 +148,28 @@ flowchart TD
 
 ---
 
-### ⏳ BƯỚC 7: `apps/wallet-core` (Microservice Nghiệp vụ Giả lập)
-* **Mục đích:** Mô phỏng ứng dụng tài chính thực tế để phát sinh giao dịch.
-* **Vì sao làm lúc này:** Khi `audit-ledger` đã sẵn sàng đón nhận dữ liệu, `wallet-core` sẽ là nguồn phát sinh dữ liệu thử nghiệm.
-* **API Endpoints:**
-  * `POST /wallets/deposit`: Nạp tiền.
-  * `POST /wallets/transfer`: Chuyển tiền giữa hai ví.
-* **Hành vi:** Khi API được gọi, nó tạo một `AuditEventDto` và đẩy vào Kafka thông qua `libs/event-bus`.
+### ✅ BƯỚC 7: `apps/wallet-core` (Microservice Nghiệp vụ Giả lập & Active Defense) - [ĐÃ XONG]
+* **Mục đích:** Mô phỏng ứng dụng tài chính thực tế để phát sinh giao dịch, đồng thời là điểm thực thi cơ chế tự vệ chủ động (Active Defense).
+* **Vì sao làm ở bước này:** Khi `audit-ledger` đã sẵn sàng đón nhận dữ liệu, `wallet-core` sẽ là nguồn phát sinh dữ liệu thử nghiệm, đồng thời kiểm chứng khả năng đóng băng giao dịch rút tiền khi hệ thống bị tấn công.
+* **Các module đã xây dựng:**
+  * `config/`: Quản lý cấu hình Kafka, Redis (`AEGIS:ACTIVE_DEFENSE:LOCK_WITHDRAWALS`), HTTP Port thông qua `WalletConfigService`.
+  * `defense/`:
+    * `RedisDefenseService`: Kết nối Redis kiểm tra và cập nhật cờ tự vệ chủ động.
+    * `ActiveDefenseGuard`: Intercept các endpoint nguy hiểm, quăng ngoại lệ **HTTP 423 Locked** khi cờ tự vệ được kích hoạt.
+  * `common/`: Decorator `@ClientInfo()` trích xuất IP, User-Agent, Device-Id từ HTTP Request Headers.
+  * `auth/`:
+    * `POST /auth/login`: Xác thực tài khoản, bắn sự kiện `USER_LOGIN_SUCCESS` hoặc `USER_LOGIN_FAILED` vào Kafka.
+    * `POST /auth/logout`: Đăng xuất, bắn sự kiện `USER_LOGOUT` vào Kafka.
+  * `wallets/`:
+    * `WalletStore`: Lưu trữ in-memory trạng thái ví và lịch sử giao dịch (seed sẵn ví `wal_alice_usd` và `wal_bob_usd`).
+    * `POST /wallets`: Khởi tạo ví mới.
+    * `GET /wallets/:id`: Tra cứu thông tin và số dư ví.
+    * `POST /wallets/deposit`: Nạp tiền, tăng số dư, phát sự kiện `WALLET_DEPOSIT`.
+    * `POST /wallets/withdraw`: Rút tiền, bảo vệ bởi `ActiveDefenseGuard`, phát sự kiện `WALLET_WITHDRAW`.
+    * `POST /wallets/transfer`: Chuyển khoản nội bộ giữa 2 ví, bảo vệ bởi `ActiveDefenseGuard`, phát sự kiện `WALLET_TRANSFER`.
+    * `GET /wallets/:id/history`: Tra cứu lịch sử biến động số dư.
+  * `main.ts` & `app.module.ts`: Khởi động NestJS Express Server với `ValidationPipe` toàn cục.
+* **Tiêu chí nghiệm thu:** Bộ Unit và E2E Integration tests đạt **100% (25/25 tests passed)**, xác minh chặn đứng giao dịch khi có cờ đỏ Redis và thông suốt khi hệ thống an toàn.
 
 ---
 
