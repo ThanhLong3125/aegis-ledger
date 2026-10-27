@@ -20,6 +20,11 @@
     "test:dashboard": "jest --config apps/audit-dashboard/jest.config.js --runInBand",
     "dashboard": "ts-node -r tsconfig-paths/register apps/audit-dashboard/src/main.ts",
     "audit-cli": "ts-node -r tsconfig-paths/register apps/audit-cli/src/cli.ts",
+    "seed:demo": "ts-node -r tsconfig-paths/register tools/scripts/seed-demo-data.ts",
+    "demo:modify": "bash tools/scripts/demo-attack-modify.sh",
+    "demo:delete": "bash tools/scripts/demo-attack-delete.sh",
+    "demo:rewrite": "bash tools/scripts/demo-attack-rewrite.sh",
+    "demo:reset": "bash tools/scripts/demo-reset.sh",
     "db:push": "prisma db push --schema=libs/database/prisma/schema.prisma",
     "db:generate": "prisma generate --schema=libs/database/prisma/schema.prisma"
   },

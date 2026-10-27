@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@aegis/database';
-import { MerkleTree, verifyEpochSignature } from '@aegis/crypto-core';
+import { MerkleTree, verifyEpochSignature, hashLeaf } from '@aegis/crypto-core';
 
 export interface IChainVerificationReport {
   isValid: boolean;
@@ -35,7 +35,6 @@ export class ChainVerifierService {
     // 2. Tải toàn bộ Audit Logs sắp xếp tăng dần theo sequence
     const auditLogs = await this.prisma.auditLog.findMany({
       orderBy: { sequence: 'asc' },
-      select: { id: true, sequence: true, epochNumber: true, leafHash: true },
     });
 
     let chainContinuityOk = true;
@@ -44,7 +43,7 @@ export class ChainVerifierService {
     let sequenceContinuityOk = true;
     let anchoredEpochs = 0;
 
-    // --- KIỂM TRA 1: TÍNH LIÊN TỤC CỦA CHUỖI SEQUENCE (AUDIT LOGS) ---
+    // --- KIỂM TRA 1: TÍNH LIÊN TỤC CỦA CHUỖI SEQUENCE & NỘI DUNG LÁ (AUDIT LOGS) ---
     if (auditLogs.length > 0) {
       let expectedSeq = 1n;
       for (const log of auditLogs) {
@@ -56,6 +55,30 @@ export class ChainVerifierService {
           expectedSeq = log.sequence;
         }
         expectedSeq++;
+
+        // Kiểm tra tính toàn vẹn của nội dung dữ liệu lá (Leaf Payload Integrity)
+        if (log.actor && log.action && log.payload && log.timestamp) {
+          const expectedLeafHash = hashLeaf({
+            id: log.id,
+            sequence: Number(log.sequence),
+            epochNumber: Number(log.epochNumber),
+            timestamp:
+              log.timestamp instanceof Date
+                ? log.timestamp.toISOString()
+                : String(log.timestamp),
+            actor: log.actor,
+            action: log.action,
+            resource: log.resource,
+            payload: log.payload,
+          });
+
+          if (expectedLeafHash !== log.leafHash) {
+            merkleTreesReconstructedOk = false;
+            issues.push(
+              `[LEAF DATA TAMPERED] Sequence #${log.sequence} có nội dung payload/actor bị sửa đổi trái phép! (leafHash trong DB không khớp với hash tính từ nội dung thực tế)`
+            );
+          }
+        }
       }
     }
 

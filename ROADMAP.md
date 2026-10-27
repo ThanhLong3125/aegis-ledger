@@ -222,30 +222,51 @@ flowchart TD
 
 ---
 
-### ⏳ BƯỚC 11: `tools/scripts` (Bộ Kịch bản Tấn công Demo Showcase)
-* **Mục đích:** Bộ script chuẩn bị sẵn cho buổi phỏng vấn hoặc quay video demo kỹ thuật.
-* **Các kịch bản:**
-  * `demo-attack-modify.sh`: Hacker chạy lệnh SQL sửa số tiền ở Block cũ $\rightarrow$ Watcher bắt trong < 200ms qua CDC $\rightarrow$ Telegram SOS $\rightarrow$ Redis locked $\rightarrow$ Wallet 423.
-  * `demo-attack-delete.sh`: Hacker chạy SQL xóa 1 dòng log $\rightarrow$ Watcher/CLI báo gãy chuỗi sequence `SEQUENCE_GAP`.
-  * `demo-attack-rewrite.sh`: Hacker sửa data và tự tính lại Root nội bộ $\rightarrow$ Bị bắt quả tang khi đối chiếu với External Anchor và chữ ký số Ed25519.
+### ✅ BƯỚC 11: `tools/scripts` (Bộ Kịch bản Tấn công Demo Showcase) - [ĐÃ XONG]
+* **Mục đích:** Bộ script chuẩn bị sẵn cho buổi phỏng vấn hoặc quay video demo kỹ thuật thực chiến.
+* **Các kịch bản đã xây dựng:**
+  * `seed-demo-data.ts` (`npm run seed:demo`): Tự động dọn dẹp, sinh cặp khóa Validator Ed25519, tạo 2 Epochs (10 giao dịch chuẩn), tạo External Anchors trên Sepolia & RFC 3161 TSA, và reset cờ Redis.
+  * `demo-attack-modify.sh` (`npm run demo:modify`): Hacker bypass trigger sửa số tiền của Alice từ 1,000 USD thành 1,000,000 USD $\rightarrow$ CDC bắt quả tang trong $< 1\text{ms}$ $\rightarrow$ Redis locked $\rightarrow$ Wallet 423 $\rightarrow$ `audit-cli verify` phát hiện lỗi `LEAF DATA TAMPERED`.
+  * `demo-attack-delete.sh` (`npm run demo:delete`): Hacker xóa Sequence #4 để phi tang giao dịch $\rightarrow$ CDC phát hiện vi phạm WORM $\rightarrow$ `audit-cli verify` báo lỗi gãy chuỗi `SEQUENCE_GAP` và `LOGS COUNT MISMATCH`.
+  * `demo-attack-rewrite.sh` (`npm run demo:rewrite`): Hacker sửa log và ghi đè Merkle Root trong `epoch_blocks` $\rightarrow$ Bị vạch trần bởi Chữ ký số Ed25519 (`SIGNATURE_FORGERY`), Hash Chain liên kết khối (`HASH CHAIN BROKEN`), và sai khác với External Anchor (`ANCHOR MISMATCH`).
+  * `demo-reset.sh` (`npm run demo:reset`): Khôi phục toàn bộ hệ thống về trạng thái an toàn 100% màu xanh.
+* **Tiêu chí nghiệm thu:** Toàn bộ 4 shell scripts và file TypeScript chạy mượt mà, có màu sắc trực quan, tự động đối chiếu cơ sở dữ liệu và kiểm chứng qua `audit-cli`.
 
 ---
 
-## 📌 Bảng Tóm Tắt Trạng Thái & Kế Hoạch Tiếp Theo
+## 📌 Bảng Tóm Tắt Trạng Thái Dự Án
 
 | Bước | Thành phần | Trạng thái | Nhiệm vụ chính |
 | :---: | :--- | :---: | :--- |
 | **1** | `tools/docker` | ✅ **Hoàn thành** | Postgres WAL logical, Redis, Kafka KRaft |
-| **2** | `libs/contracts` | ✅ **Hoàn thành** | Enums, DTOs (`class-validator`), Interfaces, Unit tests passed |
-| **3** | `libs/crypto-core` | ✅ **Hoàn thành** | Canonical JSON, SHA-256, Merkle Tree $O(\log N)$, Ed25519 Signing (24/24 tests passed) |
-| **4** | `libs/database` | ✅ **Hoàn thành** | Prisma WORM Datastore, PostgreSQL Triggers chặn UPDATE/DELETE trên cả 3 bảng (13/13 tests passed) |
-| **5** | `libs/event-bus` | ✅ **Hoàn thành** | Kafka Producer/Consumer wrappers, DTO auto-validation, DLQ routing (8/8 tests passed) |
-| **6** | `apps/audit-ledger` | ✅ **Hoàn thành** | Ingestion pipeline, Dual-trigger Buffer (size/time), Merkle Tree, Ed25519, PostgreSQL WORM atomic commit (9/9 tests passed) |
-| **7** | `apps/wallet-core` | ✅ **Hoàn thành** | Mock API nạp/chuyển tiền bắn Kafka, Active Defense 423 Locked (25/25 tests passed) |
-| **8** | `apps/tamper-watcher`| ✅ **Hoàn thành** | CDC Logical Replication, Telegram Alert, Active Defense (16/16 tests passed) |
-| **9** | `apps/audit-cli` | ✅ **Hoàn thành** | CLI verify chuỗi, xuất và xác minh Merkle Proof O(log N) (11/11 tests passed) |
-| **10**| `apps/audit-dashboard`| ✅ **Hoàn thành** | Web giao diện cây Merkle real-time, Siren báo động, REST API (14/14 tests passed) |
-| **11**| `tools/scripts` | 🎯 **Ưu tiên tiếp theo** | 3 kịch bản demo tấn công |
+| **2** | `libs/contracts` | ✅ **Hoàn thành** | Enums, DTOs (`class-validator`), Interfaces, Unit tests passed (5/5) |
+| **3** | `libs/crypto-core` | ✅ **Hoàn thành** | Canonical JSON, SHA-256, Merkle Tree $O(\log N)$, Ed25519 Signing (24/24) |
+| **4** | `libs/database` | ✅ **Hoàn thành** | Prisma WORM Datastore, PostgreSQL Triggers chặn UPDATE/DELETE (13/13) |
+| **5** | `libs/event-bus` | ✅ **Hoàn thành** | Kafka Producer/Consumer wrappers, DTO auto-validation, DLQ routing (8/8) |
+| **6** | `apps/audit-ledger` | ✅ **Hoàn thành** | Ingestion pipeline, Dual-trigger Buffer (size/time), Merkle Tree, Ed25519 (9/9) |
+| **7** | `apps/wallet-core` | ✅ **Hoàn thành** | Mock API nạp/chuyển tiền bắn Kafka, Active Defense 423 Locked (25/25) |
+| **8** | `apps/tamper-watcher`| ✅ **Hoàn thành** | CDC Logical Replication, Telegram Alert, Active Defense (16/16) |
+| **9** | `apps/audit-cli` | ✅ **Hoàn thành** | CLI verify chuỗi, xuất và xác minh Merkle Proof O(log N) (11/11) |
+| **10**| `apps/audit-dashboard`| ✅ **Hoàn thành** | Web giao diện cây Merkle real-time, Siren báo động, REST API (14/14) |
+| **11**| `tools/scripts` | ✅ **Hoàn thành** | 4 kịch bản demo tấn công, khôi phục hệ thống và seed data mẫu |
+
+---
+
+## 🚀 Định Hướng Phát Triển Tương Lai (Future Development Roadmap)
+
+Nhằm tối ưu hóa phạm vi triển khai và tính tự chủ cao nhất cho hệ thống kiểm toán tài chính nội bộ, cơ chế **External Blockchain Anchoring** hiện được thiết kế sẵn cấu trúc tại tầng CSDL (`external_anchors`, trường `anchored`, `anchor_tx_hash`) và được định hướng mở rộng trong các phiên bản tiếp theo:
+
+### 1. Neo Mốc Kiểm Toán On-Chain Lên Public Blockchain Testnet (Ethereum Sepolia / Arbitrum L2)
+- **Smart Contract Registry (`AegisAnchor.sol`):** Hợp đồng thông minh tối giản triển khai trên mạng thử nghiệm Ethereum Sepolia hoặc Layer-2 Arbitrum Testnet, cho phép ghi nhận cặp dữ liệu `(epochNumber, merkleRoot)` kèm `block.timestamp`.
+- **Automated Relayer Worker Service:** Một microservice định kỳ quét các khối Epoch đã niêm phong nhưng chưa neo (`anchored = false`), ký giao dịch Web3 qua ví bảo mật (sử dụng Ethers.js/Viem) và tự động cập nhật mã giao dịch `txHash` vào bảng `external_anchors`.
+- **Chi phí tối ưu:** Sử dụng các mạng Layer-2 (Arbitrum/Optimism/Base) hoặc cơ chế Calldata/EIP-4844 Blob để giảm thiểu tối đa phí gas kiểm toán định kỳ.
+
+### 2. Bằng Chứng Không Tiết Lộ Danh Tính (Zero-Knowledge Proofs - zk-SNARKs)
+- Tích hợp Circom / SnarkJS để sinh zk-Proof cho từng giao dịch.
+- Cho phép khách hàng hoặc bên kiểm toán độc lập chứng minh giao dịch của họ nằm trong khối Epoch hợp lệ mà **không cần tiết lộ số tiền giao dịch, danh tính người gửi/người nhận** ra môi trường công khai.
+
+### 3. Đồng Thuận Đa Validator (Multi-Validator Threshold Signatures)
+- Nâng cấp từ mô hình Single Validator Key hiện tại sang cụm Validator phi tập trung sử dụng chữ ký số ngưỡng (Threshold Ed25519 / BLS Multi-Signature) hoặc giao thức đồng thuận BFT (Raft / CometBFT) để ngăn ngừa tuyệt đối nguy cơ rò rỉ một khóa ký duy nhất.
 
 ---
 
