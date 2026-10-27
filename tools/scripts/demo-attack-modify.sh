@@ -29,6 +29,13 @@ echo -e "   3. Tamper Watcher CDC bắt quả tang trong < 1ms, kích hoạt cò
 echo -e "   4. Người dùng/Hacker thử rút tiền qua microservice WalletCore -> Bị chặn đứng với HTTP 423 Locked."
 echo -e "   5. Kiểm toán viên Zero-Trust chạy 'audit-cli verify' -> Bị phát hiện giả mạo ngay lập tức.\n"
 
+# Đảm bảo tamper-watcher đang chạy để bắt CDC và bắn Telegram
+if ! curl -s http://localhost:4002/health > /dev/null 2>&1; then
+  echo -e "${CYAN}🚀 Khởi động Tamper Watcher service (Fastify) chạy ngầm để lắng nghe CDC...${NC}"
+  npx ts-node -r tsconfig-paths/register apps/tamper-watcher/src/main.ts > /dev/null 2>&1 &
+  sleep 3
+fi
+
 echo -e "${YELLOW}--- [BƯỚC 1]: DỮ LIỆU BAN ĐẦU CỦA SEQUENCE #2 ---${NC}"
 docker exec -i aegis_postgres psql -U aegis_admin -d aegis_ledger_db -c \
   "SELECT sequence, epoch_number, action, payload, leaf_hash FROM audit_logs WHERE sequence = 2;"

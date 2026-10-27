@@ -29,6 +29,13 @@ echo -e "      - LỚP 1: Chữ ký số Ed25519 của Validator bị sai lệch
 echo -e "      - LỚP 2: Khối Epoch #1 kế tiếp bị gãy chuỗi (HASH CHAIN BROKEN) vì previousEpochRoot không khớp."
 echo -e "      - LỚP 3: Mốc neo kiểm toán ngoại vi Ethereum / RFC3161 TSA tố cáo sự sai khác (ANCHOR MISMATCH)!\n"
 
+# Đảm bảo tamper-watcher đang chạy để bắt CDC và bắn Telegram
+if ! curl -s http://localhost:4002/health > /dev/null 2>&1; then
+  echo -e "${CYAN}🚀 Khởi động Tamper Watcher service (Fastify) chạy ngầm để lắng nghe CDC...${NC}"
+  npx ts-node -r tsconfig-paths/register apps/tamper-watcher/src/main.ts > /dev/null 2>&1 &
+  sleep 3
+fi
+
 echo -e "${YELLOW}--- [BƯỚC 1]: DỮ LIỆU EPOCH #0 VÀ EPOCH #1 NGUYÊN BẢN ---${NC}"
 docker exec -i aegis_postgres psql -U aegis_admin -d aegis_ledger_db -c \
   "SELECT epoch_number, merkle_root, previous_epoch_root, signature FROM epoch_blocks ORDER BY epoch_number ASC;"

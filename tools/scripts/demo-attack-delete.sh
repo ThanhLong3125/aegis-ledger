@@ -26,6 +26,13 @@ echo -e "   2. CDC Logical Replication bắt được sự kiện DELETE (vi ph�
 echo -e "   3. Kiểm toán viên chạy 'audit-cli verify' -> Lập tức phát hiện SEQUENCE GAP và LOG COUNT MISMATCH."
 echo -e "   4. Cây Merkle không thể tái dựng được với số lượng lá bị thiếu hụt.\n"
 
+# Đảm bảo tamper-watcher đang chạy để bắt CDC và bắn Telegram
+if ! curl -s http://localhost:4002/health > /dev/null 2>&1; then
+  echo -e "${CYAN}🚀 Khởi động Tamper Watcher service (Fastify) chạy ngầm để lắng nghe CDC...${NC}"
+  npx ts-node -r tsconfig-paths/register apps/tamper-watcher/src/main.ts > /dev/null 2>&1 &
+  sleep 3
+fi
+
 echo -e "${YELLOW}--- [BƯỚC 1]: DỮ LIỆU BAN ĐẦU (SEQUENCE #4 ĐANG TỒN TẠI) ---${NC}"
 docker exec -i aegis_postgres psql -U aegis_admin -d aegis_ledger_db -c \
   "SELECT sequence, epoch_number, action, payload FROM audit_logs WHERE sequence = 4;"
