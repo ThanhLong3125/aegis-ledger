@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aegis Ledger - Real-time Merkle & SOC Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Custom Cyber Styles -->
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="p-4 md:p-6 text-slate-100 flex flex-col min-h-screen">
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="glass-panel p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center font-black text-xl shadow-lg shadow-cyan-500/20">
+        🛡️
+      </div>
+      <div>
+        <h1 class="text-xl md:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 via-purple-300 to-emerald-400 bg-clip-text text-transparent">
+          AEGIS LEDGER OBSERVABILITY & SOC
+        </h1>
+        <p class="text-xs text-slate-400">Zero-Trust WORM Audit Trail & Autonomous Active Defense</p>
+      </div>
+    </div>
+
+    <!-- Active Defense & Siren Status -->
+    <div class="flex items-center gap-3">
+      <div id="defense-badge" class="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 shadow-lg shadow-emerald-950/50">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="defense-text">SYSTEM SECURE • GATES OPEN</span>
+      </div>
+
+      <button id="btn-reset-lock" onclick="resetDefenseLock()" class="hidden px-3 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-500 text-white shadow-lg transition">
+        🚨 Dỡ Bỏ Khóa Rút Tiền
+      </button>
+
+      <div class="text-xs text-slate-400 font-mono hidden md:block" id="live-clock">
+        --:--:--
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= METRICS STATS BAR ================= -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="glass-panel p-4">
+      <div class="text-xs text-slate-400 font-medium">TỔNG SỐ EPOCHS</div>
+      <div class="text-2xl md:text-3xl font-black text-cyan-400 mt-1" id="stat-epochs">0</div>
+      <div class="text-[11px] text-slate-500 mt-1">Chuỗi Hash Chain bất biến</div>
+    </div>
+
+    <div class="glass-panel p-4">
+      <div class="text-xs text-slate-400 font-medium">TỔNG AUDIT LOGS</div>
+      <div class="text-2xl md:text-3xl font-black text-purple-400 mt-1" id="stat-logs">0</div>
+      <div class="text-[11px] text-slate-500 mt-1">Lá Merkle (Append-Only)</div>
+    </div>
+
+    <div class="glass-panel p-4">
+      <div class="text-xs text-slate-400 font-medium">MỐC NEO NGOẠI VI</div>
+      <div class="text-2xl md:text-3xl font-black text-emerald-400 mt-1" id="stat-anchors">0</div>
+      <div class="text-[11px] text-slate-500 mt-1">External Trust Anchor</div>
+    </div>
+
+    <div class="glass-panel p-4">
+      <div class="text-xs text-slate-400 font-medium">ACTIVE DEFENSE SLA</div>
+      <div class="text-2xl md:text-3xl font-black text-amber-400 mt-1">&lt; 1ms</div>
+      <div class="text-[11px] text-slate-500 mt-1">Phản xạ đóng băng tài khoản</div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN SPLIT CONTENT ================= -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+
+    <!-- LEFT: MERKLE TREE & TIMELINE (8 Columns) -->
+    <div class="lg:col-span-8 flex flex-col gap-6">
+
+      <!-- Merkle Tree Visualizer Panel -->
+      <div class="glass-panel p-4 flex-1 flex flex-col min-h-[460px]">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-white/5 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🌳</span>
+            <h2 class="font-bold text-base text-slate-200">Visual Merkle Tree Explorer</h2>
+          </div>
+
+          <!-- Epoch Selector -->
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-400">Chọn Epoch:</label>
+            <select id="epoch-select" onchange="onEpochChange()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-cyan-300 focus:outline-none focus:border-cyan-500">
+              <option value="">Đang tải...</option>
+            </select>
+            <button onclick="refreshTree()" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">
+              🔄
+            </button>
+          </div>
+        </div>
+
+        <!-- Merkle Canvas Container -->
+        <div class="relative flex-1 bg-slate-950/60 rounded-xl border border-white/5 overflow-hidden flex flex-col items-center justify-center p-2" id="canvas-container">
+          <svg id="tree-svg" class="w-full h-full min-h-[380px]"></svg>
+          <div id="tree-empty" class="text-xs text-slate-500 italic">Chưa có dữ liệu cây cho Epoch này</div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 mt-3 pt-2 border-t border-white/5">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50"></span> Merkle Root (Ký số Ed25519)
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-indigo-500"></span> Nút Nhánh (Intermediate)
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-cyan-400"></span> Nút Lá (Audit Log Giao dịch)
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50"></span> Bằng chứng Merkle Proof O(log N)
+          </div>
+        </div>
+      </div>
+
+      <!-- Hash Chain Timeline Panel -->
+      <div class="glass-panel p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-lg">⛓️</span>
+          <h2 class="font-bold text-base text-slate-200">Epoch Hash Chain Monitor</h2>
+          <span class="text-xs text-slate-500 ml-auto">(Liên kết PrevRoot &rarr; Root)</span>
+        </div>
+
+        <div class="flex gap-4 overflow-x-auto pb-2" id="timeline-container">
+          <!-- Timeline Cards injected via app.js -->
+          <div class="text-xs text-slate-500 italic">Đang tải chuỗi Epoch...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: INSPECTOR & SOC ALERTS (4 Columns) -->
+    <div class="lg:col-span-4 flex flex-col gap-6">
+
+      <!-- Node / Transaction Inspector -->
+      <div class="glass-panel p-4 flex flex-col">
+        <div class="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🔍</span>
+            <h2 class="font-bold text-base text-slate-200">Audit Leaf Inspector</h2>
+          </div>
+          <span id="inspect-seq-badge" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono">Chưa chọn lá</span>
+        </div>
+
+        <div id="inspector-content" class="text-xs text-slate-400 flex flex-col gap-3 min-h-[160px]">
+          <p class="text-slate-500 italic text-center py-8">
+            👉 Nhấp vào một <span class="text-cyan-400 font-semibold">Nút Lá</span> trên Cây Merkle để xem toàn bộ thông tin chi tiết của giao dịch và xác minh bằng chứng.
+          </p>
+        </div>
+
+        <button id="btn-highlight-proof" onclick="onHighlightProofClick()" class="hidden mt-3 w-full py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2">
+          ✨ Xác minh Merkle Proof O(log N)
+        </button>
+      </div>
+
+      <!-- Live SOC & Tamper Alert Feed -->
+      <div class="glass-panel p-4 flex-1 flex flex-col min-h-[260px]">
+        <div class="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🚨</span>
+            <h2 class="font-bold text-base text-slate-200">Security Operations Center (SOC)</h2>
+          </div>
+          <span class="flex h-2 w-2 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto space-y-2.5 text-xs pr-1" id="soc-feed">
+          <!-- Live events injected here -->
+          <div class="p-2.5 rounded-lg bg-slate-900/60 border border-white/5 text-slate-400">
+            <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+              <span>SYSTEM KERNEL</span>
+              <span>Vừa xong</span>
+            </div>
+            <div>Postgres WORM Triggers & CDC Watcher đang bảo vệ chuỗi ở chế độ thường trực.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Audio siren (optional synthesized via Web Audio API) -->
+  <script src="/app.js"></script>
+</body>
+</html>

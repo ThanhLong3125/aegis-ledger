@@ -1,0 +1,43 @@
+{
+  "name": "audit-dashboard",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/audit-dashboard/src",
+  "projectType": "application",
+  "tags": ["scope:audit-dashboard", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/audit-dashboard",
+        "main": "apps/audit-dashboard/src/main.ts",
+        "tsConfig": "apps/audit-dashboard/tsconfig.app.json",
+        "assets": [
+          {
+            "input": "apps/audit-dashboard/src/public",
+            "glob": "**/*",
+            "output": "public"
+          }
+        ]
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register apps/audit-dashboard/src/main.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "apps/audit-dashboard/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "jest --config apps/audit-dashboard/jest.config.js --runInBand"
+      }
+    }
+  }
+}

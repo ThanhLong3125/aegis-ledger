@@ -17,6 +17,8 @@
     "test:wallet-core": "jest --config apps/wallet-core/jest.config.js --runInBand",
     "test:tamper-watcher": "jest --config apps/tamper-watcher/jest.config.js --runInBand",
     "test:audit-cli": "jest --config apps/audit-cli/jest.config.js --runInBand",
+    "test:dashboard": "jest --config apps/audit-dashboard/jest.config.js --runInBand",
+    "dashboard": "ts-node -r tsconfig-paths/register apps/audit-dashboard/src/main.ts",
     "audit-cli": "ts-node -r tsconfig-paths/register apps/audit-cli/src/cli.ts",
     "db:push": "prisma db push --schema=libs/database/prisma/schema.prisma",
     "db:generate": "prisma generate --schema=libs/database/prisma/schema.prisma"

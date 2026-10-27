@@ -203,21 +203,31 @@ flowchart TD
 
 ---
 
-### ⏳ BƯỚC 10: `apps/audit-dashboard` (Giao diện Web Trực quan Real-time)
-* **Mục đích:** Trực quan hóa toàn bộ hệ thống bằng Next.js/Vite + Socket.io.
-* **Tính năng hiển thị:**
-  * Sơ đồ tương tác Cây Merkle (Visual Merkle Tree View).
-  * Hiển thị trạng thái các Epoch nối xích với nhau (màu xanh lá).
-  * Khi có cuộc tấn công sửa DB: Khối bị sửa lập tức nhấp nháy chuyển sang **MÀU ĐỎ**, còi báo động hú trên trình duyệt.
+### ✅ BƯỚC 10: `apps/audit-dashboard` (Giao diện Web Trực quan Real-time) - [ĐÃ XONG]
+* **Mục đích:** Cung cấp bảng điều khiển trung tâm (SOC) trực quan hóa cấu trúc mật mã Merkle Tree, Hash Chain và hệ thống phòng thủ chủ động Active Defense theo thời gian thực.
+* **Vì sao làm ở bước này:** Khi toàn bộ microservices lõi đã vận hành, dashboard mang lại trải nghiệm thị giác ấn tượng, phục vụ demo showcase và trực ban an ninh SOC.
+* **Các module đã xây dựng:**
+  * `src/api/`:
+    * `SseService`: RxJS Subject stream dữ liệu Server-Sent Events đa kênh theo thời gian thực.
+    * `DashboardService`: Tính toán số liệu tổng quan (Overview), trích xuất danh sách Epoch, tái dựng cây Merkle theo từng tầng (Layers & Nodes) để vẽ trên canvas/SVG, sinh & xác minh Merkle Sibling Proof trực tuyến, quản lý cờ đỏ tự vệ và nút Reset.
+    * `DashboardController`: Cung cấp bộ REST API chuẩn (`/api/overview`, `/api/epochs`, `/api/epochs/:epochNumber/tree`, `/api/proof/:sequence`, `/api/security/status`, `/api/security/reset`, `/api/stream`).
+  * `src/public/`:
+    * Giao diện HTML5/CSS3 chuẩn phong cách Dark Cyberpunk / Glassmorphism hiện đại.
+    * Trình diễn cây Merkle dạng tương tác đồ họa véc-tơ SVG mềm mại với đường cong cubic Bézier.
+    * Inspector Drawer: Xem chi tiết nội dung Audit Log từng lá cây khi nhấp chuột.
+    * Proof Highlighting: Tô sáng đường dẫn xác minh Merkle Proof $O(\log N)$ trực tiếp trên cây nhị phân.
+    * Live Security Siren: Hiệu ứng đèn cảnh báo đỏ chớp nháy toàn màn hình khi phát hiện vi phạm cơ sở dữ liệu và cờ đỏ Active Defense kích hoạt.
+  * `main.ts` & `app.module.ts`: Khởi động ứng dụng phục vụ song song cả REST API lẫn Static Web UI tại cổng `3333`.
+* **Tiêu chí nghiệm thu:** Bộ Unit tests đạt **100% (14/14 tests passed)**, giao diện Web phản hồi tức thì với SSE stream và tương tác đồ họa cây Merkle mượt mà.
 
 ---
 
 ### ⏳ BƯỚC 11: `tools/scripts` (Bộ Kịch bản Tấn công Demo Showcase)
 * **Mục đích:** Bộ script chuẩn bị sẵn cho buổi phỏng vấn hoặc quay video demo kỹ thuật.
 * **Các kịch bản:**
-  * `demo-attack-modify.sh`: Hacker chạy lệnh SQL sửa số tiền ở Block cũ $\rightarrow$ Watcher bắt trong < 200ms qua CDC.
-  * `demo-attack-delete.sh`: Hacker chạy SQL xóa 1 dòng log $\rightarrow$ Watcher báo gãy chuỗi sequence.
-  * `demo-attack-rewrite.sh`: Hacker sửa data và tự tính lại Root nội bộ $\rightarrow$ Bị bắt quả tang khi đối chiếu với External Anchor.
+  * `demo-attack-modify.sh`: Hacker chạy lệnh SQL sửa số tiền ở Block cũ $\rightarrow$ Watcher bắt trong < 200ms qua CDC $\rightarrow$ Telegram SOS $\rightarrow$ Redis locked $\rightarrow$ Wallet 423.
+  * `demo-attack-delete.sh`: Hacker chạy SQL xóa 1 dòng log $\rightarrow$ Watcher/CLI báo gãy chuỗi sequence `SEQUENCE_GAP`.
+  * `demo-attack-rewrite.sh`: Hacker sửa data và tự tính lại Root nội bộ $\rightarrow$ Bị bắt quả tang khi đối chiếu với External Anchor và chữ ký số Ed25519.
 
 ---
 
@@ -225,8 +235,8 @@ flowchart TD
 
 | Bước | Thành phần | Trạng thái | Nhiệm vụ chính |
 | :---: | :--- | :---: | :--- |
-| **1** | `tools/docker` |  **Hoàn thành** | Postgres WAL logical, Redis, Kafka KRaft |
-| **2** | `libs/contracts` |  **Hoàn thành** | Enums, DTOs (`class-validator`), Interfaces, Unit tests passed |
+| **1** | `tools/docker` | ✅ **Hoàn thành** | Postgres WAL logical, Redis, Kafka KRaft |
+| **2** | `libs/contracts` | ✅ **Hoàn thành** | Enums, DTOs (`class-validator`), Interfaces, Unit tests passed |
 | **3** | `libs/crypto-core` | ✅ **Hoàn thành** | Canonical JSON, SHA-256, Merkle Tree $O(\log N)$, Ed25519 Signing (24/24 tests passed) |
 | **4** | `libs/database` | ✅ **Hoàn thành** | Prisma WORM Datastore, PostgreSQL Triggers chặn UPDATE/DELETE trên cả 3 bảng (13/13 tests passed) |
 | **5** | `libs/event-bus` | ✅ **Hoàn thành** | Kafka Producer/Consumer wrappers, DTO auto-validation, DLQ routing (8/8 tests passed) |
@@ -234,8 +244,8 @@ flowchart TD
 | **7** | `apps/wallet-core` | ✅ **Hoàn thành** | Mock API nạp/chuyển tiền bắn Kafka, Active Defense 423 Locked (25/25 tests passed) |
 | **8** | `apps/tamper-watcher`| ✅ **Hoàn thành** | CDC Logical Replication, Telegram Alert, Active Defense (16/16 tests passed) |
 | **9** | `apps/audit-cli` | ✅ **Hoàn thành** | CLI verify chuỗi, xuất và xác minh Merkle Proof O(log N) (11/11 tests passed) |
-| **10**| `apps/audit-dashboard`| 🎯 **Ưu tiên tiếp theo** | Web giao diện cây Merkle real-time |
-| **11**| `tools/scripts` | ⏳ Chờ | 3 kịch bản demo tấn công |
+| **10**| `apps/audit-dashboard`| ✅ **Hoàn thành** | Web giao diện cây Merkle real-time, Siren báo động, REST API (14/14 tests passed) |
+| **11**| `tools/scripts` | 🎯 **Ưu tiên tiếp theo** | 3 kịch bản demo tấn công |
 
 ---
 
