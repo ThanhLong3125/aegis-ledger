@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { KafkaProducerService } from '@aegis/event-bus';
 import { RedisDefenseService } from '../src/defense/redis-defense.service';
 
 describe('WalletCore E2E Integration Tests', () => {
-  let app: INestApplication;
+  let app: NestFastifyApplication;
   let mockKafkaProducer: { publishAuditEvent: jest.Mock };
   let mockRedisDefense: {
     isLockWithdrawalsActive: jest.Mock;
@@ -36,7 +37,9 @@ describe('WalletCore E2E Integration Tests', () => {
       .useValue(mockRedisDefense)
       .compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter()
+    );
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -46,6 +49,7 @@ describe('WalletCore E2E Integration Tests', () => {
     );
 
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
   });
 
   afterAll(async () => {

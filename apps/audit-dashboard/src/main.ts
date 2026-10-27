@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Logger } from '@nestjs/common';
 import { join } from 'path';
 import { existsSync } from 'fs';
@@ -7,11 +7,14 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const logger = new Logger('DashboardBootstrap');
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter()
+  );
 
   app.enableCors({
     origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
   });
 
   // Xác định đường dẫn thư mục public (hoạt động cả khi chạy ts-node dev lẫn dist build)
@@ -19,12 +22,15 @@ async function bootstrap() {
   const srcPublic = join(process.cwd(), 'apps', 'audit-dashboard', 'src', 'public');
   const staticPath = existsSync(distPublic) ? distPublic : srcPublic;
 
-  app.useStaticAssets(staticPath);
-  logger.log(`Serving static assets from: ${staticPath}`);
+  app.useStaticAssets({
+    root: staticPath,
+    prefix: '/',
+  });
+  logger.log(`Serving static assets with Fastify from: ${staticPath}`);
 
-  const port = process.env.PORT || process.env.DASHBOARD_PORT || 3333;
-  await app.listen(port);
-  logger.log(`Aegis Audit Dashboard is running on: http://localhost:${port}`);
+  const port = parseInt(process.env.PORT || process.env.DASHBOARD_PORT || '3333', 10);
+  await app.listen({ port, host: '0.0.0.0' });
+  logger.log(`🚀 Aegis Audit Dashboard (Fastify) is running on: http://localhost:${port}`);
 }
 
 bootstrap().catch((err) => {

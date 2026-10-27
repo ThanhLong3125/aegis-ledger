@@ -22,7 +22,7 @@ Dịch vụ mô phỏng tài chính (Mock Financial Service) đóng vai trò là
 
 ## 2. Kiến trúc & Công nghệ sử dụng
 
-- **Framework:** NestJS (Express adapter)
+- **Framework:** NestJS (Fastify adapter)
 - **Message Broker:** KafkaJS (`@aegis/event-bus`), topic `aegis.audit.events`
 - **In-Memory Ledger Store:** `WalletStore` với tính năng mô phỏng tài khoản, giao dịch và quản lý số dư tức thời.
 - **Active Defense:** `ioredis` kết nối Redis để tra cứu trạng thái khóa khẩn cấp với độ trễ thấp (< 1ms).

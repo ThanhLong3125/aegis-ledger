@@ -1,11 +1,15 @@
 import { NestFactory } from '@nestjs/core';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { SlidingWindowService } from './buffer/sliding-window.service';
 
 async function bootstrap() {
   const logger = new Logger('AuditLedgerBootstrap');
-  const app = await NestFactory.createApplicationContext(AppModule);
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter()
+  );
 
   app.enableShutdownHooks();
 
@@ -26,7 +30,10 @@ async function bootstrap() {
   process.on('SIGINT', () => void shutdown('SIGINT'));
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
 
-  logger.log('🛡️ AegisLedger Ingestion & Epoch Engine đã khởi động thành công và đang hoạt động.');
+  const port = parseInt(process.env.AUDIT_LEDGER_PORT || '4001', 10);
+  await app.listen({ port, host: '0.0.0.0' });
+
+  logger.log(`🛡️ AegisLedger Ingestion & Epoch Engine (Fastify) đã khởi động tại http://localhost:${port}`);
 }
 
 bootstrap().catch((err) => {

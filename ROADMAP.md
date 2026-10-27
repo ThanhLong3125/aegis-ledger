@@ -168,7 +168,7 @@ flowchart TD
     * `POST /wallets/withdraw`: Rút tiền, bảo vệ bởi `ActiveDefenseGuard`, phát sự kiện `WALLET_WITHDRAW`.
     * `POST /wallets/transfer`: Chuyển khoản nội bộ giữa 2 ví, bảo vệ bởi `ActiveDefenseGuard`, phát sự kiện `WALLET_TRANSFER`.
     * `GET /wallets/:id/history`: Tra cứu lịch sử biến động số dư.
-  * `main.ts` & `app.module.ts`: Khởi động NestJS Express Server với `ValidationPipe` toàn cục.
+  * `main.ts` & `app.module.ts`: Khởi động NestJS Fastify Server với `ValidationPipe` toàn cục.
 * **Tiêu chí nghiệm thu:** Bộ Unit và E2E Integration tests đạt **100% (25/25 tests passed)**, xác minh chặn đứng giao dịch khi có cờ đỏ Redis và thông suốt khi hệ thống an toàn.
 
 ---

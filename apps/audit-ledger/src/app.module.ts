@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EventBusModule } from '@aegis/event-bus';
 import { DatabaseModule } from '@aegis/database';
+import { HealthController } from './health.controller';
 
 import { ConfigModule } from './config/config.module';
 import { LedgerConfigService } from './config/ledger-config.service';
@@ -37,5 +38,6 @@ import { InboundModule } from './inbound/inbound.module';
     BufferModule,
     InboundModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}

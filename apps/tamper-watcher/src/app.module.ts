@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EventBusModule } from '@aegis/event-bus';
 import { DatabaseModule } from '@aegis/database';
+import { HealthController } from './health.controller';
 import { ConfigModule } from './config/config.module';
 import { WatcherConfigService } from './config/watcher-config.service';
 import { DefenseModule } from './defense/defense.module';
@@ -38,5 +39,6 @@ import { ScannerModule } from './scanner/scanner.module';
     // 7. Tầng Integrity Scanner
     ScannerModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
