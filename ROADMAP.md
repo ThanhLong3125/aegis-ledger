@@ -173,17 +173,21 @@ flowchart TD
 
 ---
 
-### ⏳ BƯỚC 8: `apps/tamper-watcher` (Autonomous Active Defense qua Postgres CDC)
+### ✅ BƯỚC 8: `apps/tamper-watcher` (Autonomous Active Defense qua Postgres CDC) - [ĐÃ XONG]
 * **Mục đích:** Giám sát thời gian thực, phát hiện xâm nhập và tự vệ trong `< 200ms`.
-* **Vì sao làm ở bước này:** Cần có dữ liệu thực tế đang ghi vào PostgreSQL thì Watcher mới có luồng WAL để giám sát.
-* **Cơ chế hoạt động:**
-  1. Gắn vào PostgreSQL Logical Replication Stream.
-  2. Bảng `audit_logs` là Append-Only, do đó:
-     * Thấy event `INSERT` $\rightarrow$ Tính nhẩm lại `leafHash` xem có đúng không.
-     * Thấy event **`UPDATE`** hoặc **`DELETE`** $\rightarrow$ **LẬP TỨC BÁO ĐỘNG ĐỎ TRONG < 200MS**:
-       * Bắn tin nhắn khẩn cấp qua **Telegram Bot**.
-       * Gửi tín hiệu WebSocket cảnh báo sang Web Dashboard.
-       * Set cờ Redis: `LOCK_WITHDRAWALS=true` (Active Defense: đóng băng cổng rút tiền).
+* **Vì sao làm ở bước này:** Khi dữ liệu đang được ghi nhận vào PostgreSQL, Watcher sử dụng luồng WAL để giám sát tính toàn vẹn ngay ở tầng sâu nhất.
+* **Các module đã xây dựng:**
+  * `config/`: Quản lý cấu hình Postgres, Redis, Kafka, Telegram Bot Token/Chat ID.
+  * `defense/`: `ActiveDefenseService` kích hoạt cờ đỏ `AEGIS:ACTIVE_DEFENSE:LOCK_WITHDRAWALS=true` với độ trễ đo lường thực tế $< 1\text{ms}$.
+  * `alert/`:
+    * `TelegramService`: Định dạng HTML gửi tin SOS tới Telegram Bot, tích hợp cơ chế Console Fallback Mode tự động khi chưa có token.
+    * `AlertDispatcherService`: Điều phối kích hoạt khóa Redis $\rightarrow$ Bắn Kafka `aegis.tamper.alerts` $\rightarrow$ Bắn tin Telegram.
+  * `cdc/`:
+    * `CdcEventParser`: Bóc tách cú pháp WAL của plugin `test_decoding` (phân loại INSERT, UPDATE, DELETE).
+    * `CdcListenerService`: Quản lý logical replication slot `aegis_tamper_watcher_slot`, bắt quả tang mọi lệnh UPDATE/DELETE trên các bảng WORM.
+  * `scanner/`:
+    * `IntegrityScannerService`: Quét chu kỳ kiểm tra tính liên tục của sequence (phát hiện `SEQUENCE_GAP`), kiểm tra Hash Chain (`HISTORICAL_REWRITE`) và chữ ký số Ed25519 (`SIGNATURE_FORGERY`).
+* **Tiêu chí nghiệm thu:** Bộ Unit và E2E Integration tests đạt **100% (16/16 tests passed)**, thời gian kích hoạt tự vệ từ khi phát hiện breach đạt chuẩn SLA $< 200\text{ms}$ (thực tế $< 1\text{ms}$).
 
 ---
 
@@ -223,9 +227,9 @@ flowchart TD
 | **4** | `libs/database` | ✅ **Hoàn thành** | Prisma WORM Datastore, PostgreSQL Triggers chặn UPDATE/DELETE trên cả 3 bảng (13/13 tests passed) |
 | **5** | `libs/event-bus` | ✅ **Hoàn thành** | Kafka Producer/Consumer wrappers, DTO auto-validation, DLQ routing (8/8 tests passed) |
 | **6** | `apps/audit-ledger` | ✅ **Hoàn thành** | Ingestion pipeline, Dual-trigger Buffer (size/time), Merkle Tree, Ed25519, PostgreSQL WORM atomic commit (9/9 tests passed) |
-| **7** | `apps/wallet-core` | 🎯 **Ưu tiên tiếp theo** | Mock API nạp/chuyển tiền bắn Kafka |
-| **8** | `apps/tamper-watcher`| ⏳ Chờ | CDC Logical Replication, Telegram Alert, Active Defense |
-| **9** | `apps/audit-cli` | ⏳ Chờ | CLI verify chuỗi & sinh Merkle Proof |
+| **7** | `apps/wallet-core` | ✅ **Hoàn thành** | Mock API nạp/chuyển tiền bắn Kafka, Active Defense 423 Locked (25/25 tests passed) |
+| **8** | `apps/tamper-watcher`| ✅ **Hoàn thành** | CDC Logical Replication, Telegram Alert, Active Defense (16/16 tests passed) |
+| **9** | `apps/audit-cli` | 🎯 **Ưu tiên tiếp theo** | CLI verify chuỗi & sinh Merkle Proof |
 | **10**| `apps/audit-dashboard`| ⏳ Chờ | Web giao diện cây Merkle real-time |
 | **11**| `tools/scripts` | ⏳ Chờ | 3 kịch bản demo tấn công |
 

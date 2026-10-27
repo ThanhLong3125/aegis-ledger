@@ -15,6 +15,7 @@
     "test:event-bus": "jest --config libs/event-bus/jest.config.js",
     "test:audit-ledger": "jest --config apps/audit-ledger/jest.config.js --runInBand",
     "test:wallet-core": "jest --config apps/wallet-core/jest.config.js --runInBand",
+    "test:tamper-watcher": "jest --config apps/tamper-watcher/jest.config.js --runInBand",
     "db:push": "prisma db push --schema=libs/database/prisma/schema.prisma",
     "db:generate": "prisma generate --schema=libs/database/prisma/schema.prisma"
   },
@@ -27,6 +28,7 @@
     "@nx/workspace": "23.3.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
     "@types/supertest": "^6.0.3",
     "jest": "^30.5.2",
     "nx": "23.3.0",
@@ -46,6 +48,7 @@
     "class-validator": "^0.15.1",
     "ioredis": "^5.11.1",
     "kafkajs": "^2.2.4",
+    "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   }

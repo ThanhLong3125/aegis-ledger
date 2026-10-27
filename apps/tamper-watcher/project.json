@@ -1,0 +1,37 @@
+{
+  "name": "tamper-watcher",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/tamper-watcher/src",
+  "projectType": "application",
+  "tags": ["scope:tamper-watcher", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/tamper-watcher",
+        "main": "apps/tamper-watcher/src/main.ts",
+        "tsConfig": "apps/tamper-watcher/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register apps/tamper-watcher/src/main.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "apps/tamper-watcher/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "jest --config apps/tamper-watcher/jest.config.js --runInBand"
+      }
+    }
+  }
+}
