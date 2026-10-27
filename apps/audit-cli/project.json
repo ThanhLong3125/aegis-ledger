@@ -1,0 +1,31 @@
+{
+  "name": "audit-cli",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/audit-cli/src",
+  "projectType": "application",
+  "tags": ["scope:audit-cli", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/audit-cli",
+        "main": "apps/audit-cli/src/cli.ts",
+        "tsConfig": "apps/audit-cli/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "lint": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "apps/audit-cli/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "jest --config apps/audit-cli/jest.config.js --runInBand"
+      }
+    }
+  }
+}

@@ -191,11 +191,15 @@ flowchart TD
 
 ---
 
-### ⏳ BƯỚC 9: `apps/audit-cli` (Công cụ Kiểm toán Độc lập)
+### ✅ BƯỚC 9: `apps/audit-cli` (Công cụ Kiểm toán Độc lập Zero-Trust) - [ĐÃ XONG]
 * **Mục đích:** Công cụ dòng lệnh dành cho kiểm toán viên bên thứ ba hoặc người dùng tự xác minh tính toàn vẹn.
-* **Lệnh hỗ trợ:**
-  * `audit-cli verify`: Quét toàn bộ chuỗi Epoch và đối chiếu với External Anchor.
-  * `audit-cli prove --seq <number>`: Xuất bằng chứng mật mã Merkle Proof $O(\log N)$ cho một giao dịch cụ thể để người dùng tự kiểm tra trên máy cá nhân.
+* **Vì sao làm ở bước này:** Sau khi đã có cơ sở dữ liệu sổ cái và hệ thống phòng vệ, CLI cung cấp cơ chế kiểm toán ngoại tuyến và sinh bằng chứng chứng minh giao dịch.
+* **Các lệnh và module đã xây dựng:**
+  * `services/chain-verifier.service.ts`: Quét toàn diện tính toàn vẹn chuỗi: sequence continuity ($1..N$), hash chain link giữa các Epoch, xác minh chữ ký số Ed25519 của Validator và tái dựng Cây Merkle đối chiếu Merkle Root.
+  * `services/merkle-prover.service.ts`: Trích xuất đường dẫn bằng chứng thành viên Merkle Proof $O(\log N)$ cho một giao dịch theo sequence number.
+  * `services/proof-verifier.service.ts`: Xác minh toán học độc lập bằng chứng Merkle Proof ngoại tuyến (Offline Zero-Trust) mà không cần kết nối mạng hay database.
+  * `commands/`: Triển khai 3 lệnh CLI: `verify`, `prove --seq <number> [--out <file>]`, và `verify-proof --file <file>`.
+* **Tiêu chí nghiệm thu:** Bộ Unit tests đạt **100% (11/11 tests passed)**, các lệnh CLI hoạt động chuẩn xác với exit code 0 khi toàn vẹn và exit code 1 khi có dấu hiệu gian lận.
 
 ---
 
@@ -229,8 +233,8 @@ flowchart TD
 | **6** | `apps/audit-ledger` | ✅ **Hoàn thành** | Ingestion pipeline, Dual-trigger Buffer (size/time), Merkle Tree, Ed25519, PostgreSQL WORM atomic commit (9/9 tests passed) |
 | **7** | `apps/wallet-core` | ✅ **Hoàn thành** | Mock API nạp/chuyển tiền bắn Kafka, Active Defense 423 Locked (25/25 tests passed) |
 | **8** | `apps/tamper-watcher`| ✅ **Hoàn thành** | CDC Logical Replication, Telegram Alert, Active Defense (16/16 tests passed) |
-| **9** | `apps/audit-cli` | 🎯 **Ưu tiên tiếp theo** | CLI verify chuỗi & sinh Merkle Proof |
-| **10**| `apps/audit-dashboard`| ⏳ Chờ | Web giao diện cây Merkle real-time |
+| **9** | `apps/audit-cli` | ✅ **Hoàn thành** | CLI verify chuỗi, xuất và xác minh Merkle Proof O(log N) (11/11 tests passed) |
+| **10**| `apps/audit-dashboard`| 🎯 **Ưu tiên tiếp theo** | Web giao diện cây Merkle real-time |
 | **11**| `tools/scripts` | ⏳ Chờ | 3 kịch bản demo tấn công |
 
 ---

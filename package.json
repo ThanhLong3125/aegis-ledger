@@ -16,6 +16,8 @@
     "test:audit-ledger": "jest --config apps/audit-ledger/jest.config.js --runInBand",
     "test:wallet-core": "jest --config apps/wallet-core/jest.config.js --runInBand",
     "test:tamper-watcher": "jest --config apps/tamper-watcher/jest.config.js --runInBand",
+    "test:audit-cli": "jest --config apps/audit-cli/jest.config.js --runInBand",
+    "audit-cli": "ts-node -r tsconfig-paths/register apps/audit-cli/src/cli.ts",
     "db:push": "prisma db push --schema=libs/database/prisma/schema.prisma",
     "db:generate": "prisma generate --schema=libs/database/prisma/schema.prisma"
   },
@@ -46,6 +48,7 @@
     "@types/ioredis": "^5.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "commander": "^15.0.0",
     "ioredis": "^5.11.1",
     "kafkajs": "^2.2.4",
     "pg": "^8.23.1",
